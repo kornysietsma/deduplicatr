@@ -1,5 +1,5 @@
 TODO:
 - filter out parent/child exact matches, only show the child (probably most meaningful)
 -  needs to cope with grandparents as well, so foo, foo/bar and foo/bar/baz might be the same but contain multiple files in baz...
-- handle very large file lists - currently stack overflows pretty fast
+- check stack size needed since I fixed the stack overflow problem.
 - lots of other stuff

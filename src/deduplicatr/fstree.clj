@@ -45,7 +45,8 @@
   (reduce
     (fn [summaries file-and-hash]
       (let [[filename {:keys [hash bytes]}] file-and-hash]
-       (map #(*dir-summary-fn* % filename hash bytes) summaries)))
+        ; NOTE: doall to force non-laziness - without this you get stack overflows on large filesystems
+       (doall (map #(*dir-summary-fn* % filename hash bytes) summaries))))
     summaries-so-far
     file-hashes-by-name
     ))
