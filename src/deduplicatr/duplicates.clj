@@ -24,7 +24,15 @@
   [root]
   (map (fn [n] (if (contains? n :summary) (:summary n) n)) (tree-seq #(contains? % :files) all-children root)))
 
+(defn size-and-hash-sort-key
+  [summary]
+  [(- (.bytes summary)) (.hash summary) (.getName (.file summary))])
+
 (defn duplicates
   [tree]
-; traverse tree, build up list of summaries, partition by [size, hash], sort by size, filter out all singles.
-  0)
+; traverse tree, build up list of summaries, sort so duplicates are together, partition by hash, filter out all singles.
+  (let [nodeseq (fstree-seq tree)
+        sorted (sort-by size-and-hash-sort-key nodeseq)
+        partitioned (partition-by :hash sorted)]
+    (remove #(= 1 (count %)) partitioned)
+))
