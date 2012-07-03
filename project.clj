@@ -13,5 +13,5 @@
                                  }}}
   :min-lein-version "2.0.0"
   :main deduplicatr.core
-  :jvm-opts ["-Xss1500m"] 
+  :jvm-opts ["-Xmx1024m" "-Xss100m"] 
 )
