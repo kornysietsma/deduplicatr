@@ -94,8 +94,8 @@
          (map :file (first complex-result)) 
            => [(file simple-fixture "ab") (file simple-fixture "ab_split") (file simple-fixture "parent" "child")]
          (map #(.getName (:file %)) (nth complex-result 1)) 
-           => ["b.txt" "b.txt" "child2" "child_b.txt" "parent_b.txt"]
+           => ["b.txt" "b.txt" "child_b.txt" "parent_b.txt"]
          (map #(.getName (:file %)) (nth complex-result 2)) 
-           => ["a.txt" "a.txt" "child1" "child_a.txt" "parent_a.txt"]
+           => ["a.txt" "a.txt" "child_a.txt" "parent_a.txt"]
            ))
 )

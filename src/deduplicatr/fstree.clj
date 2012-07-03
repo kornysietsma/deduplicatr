@@ -14,7 +14,7 @@
 
 (defn- update-map-and-summaries-for-a-dir
   "intermediate fn for use in reduce below - takes a memo of [results so far, summaries so far] and adds a single dir"
-  [memo child-dir]
+  [memo ^File child-dir]
   (let [[map-so-far summaries-so-far] memo
         child-name (.getName child-dir)
         [child-treeified updated-summaries] (treeify-and-summarize child-dir summaries-so-far)
@@ -34,7 +34,7 @@
   "return a map by file name of file hash results"
   [files]
   (reduce
-    (fn [memo file]
+    (fn [memo ^File file]
       (assoc memo (.getName file) (*file-hash-fn* file)))
     {}
     files))
@@ -54,11 +54,11 @@
 (defn treeify-and-summarize
   "traverses a directory, building a tree of contents and adding summaries of all met files to the visitors passed in
   - returns a tuple of [(hash info about this dir),(updated summaries)]"
-  [dir summaries-so-far]
+  [^File dir summaries-so-far]
     (let [my-summary (*dir-summary-fn* dir)  ; 1-arg call gives an initial summary
           children (.listFiles dir)
-          child-files (filter #(.isFile %) children)
-          child-dirs (filter #(.isDirectory %) children)
+          child-files (filter (fn [^File f] (.isFile f)) children)
+          child-dirs (filter (fn [^File f] (.isDirectory f)) children)
          ; need to summarise to all passed summary info, as well as our new one
           summaries-including-mine (conj summaries-so-far my-summary)
          ; traverse child directories, updating summaries as we go

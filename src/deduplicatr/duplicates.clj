@@ -3,6 +3,8 @@
   (:import (deduplicatr.file FileSummary DirSummary)
            (java.io File)))
 
+(set! *warn-on-reflection* true)
+
 (defn- all-children
   "traverse both child directories, and child file summaries, of a directory in a fstree"
   [node]
