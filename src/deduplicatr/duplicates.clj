@@ -1,6 +1,7 @@
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:import (deduplicatr.file FileSummary DirSummary)))
+  (:import (deduplicatr.file FileSummary DirSummary)
+           (java.io File)))
 
 (defn- all-children
   "traverse both child directories, and child file summaries, of a directory in a fstree"
@@ -26,13 +27,38 @@
 
 (defn size-and-hash-sort-key
   [summary]
-  [(- (.bytes summary)) (.hash summary) (.getName (.file summary))])
+  [(- (.bytes summary)) (.hash summary) (.getPath (.file summary))])
+
+(defn is-ancestor-of
+  "checks if a file is another file's ancestor - assumes they are from same root though!"
+  [file1 file2]
+  (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
+
+(defn- is-summary-ancestor-of
+  [summary1 summary2]
+  (is-ancestor-of (.file summary1) (.file summary2)))
+
+(defn- is-ancestor-of-any
+  [summary summaries]
+  (if (isa? FileSummary summary)
+    false
+    (some (partial is-summary-ancestor-of summary) summaries)))
+
+(defn without-ancestors
+  "remove summaries in a matching summary seq that are ancestors of others in the seq - assumes files sorted by path!"
+  [summaries]
+  (keep-indexed 
+    (fn [index item] (if (is-ancestor-of-any item (nthrest summaries (inc index))) nil item))
+    summaries))
 
 (defn duplicates
   [tree]
 ; traverse tree, build up list of summaries, sort so duplicates are together, partition by hash, filter out all singles.
   (let [nodeseq (fstree-seq tree)
         sorted (sort-by size-and-hash-sort-key nodeseq)
-        partitioned (partition-by :hash sorted)]
-    (remove #(= 1 (count %)) partitioned)
-))
+        partitioned (partition-by :hash sorted)
+        only-dups (remove #(= 1 (count %)) partitioned)
+        with-ancestors-pruned (map without-ancestors only-dups)
+        with-ancestors-pruned-only-dups (remove #(= 1 (count %)) with-ancestors-pruned)]
+    with-ancestors-pruned-only-dups)
+)
