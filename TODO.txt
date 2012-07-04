@@ -1,5 +1,13 @@
 TODO:
-- filter out parent/child exact matches, only show the child (probably most meaningful)
--  needs to cope with grandparents as well, so foo, foo/bar and foo/bar/baz might be the same but contain multiple files in baz...
-- check stack size needed since I fixed the stack overflow problem.
-- lots of other stuff
+- finish type hinting - probably need to rethink using 2 different record types!
+- ignore symlinks - either needs java 7, or JNI, or slow ugly hacks!
+- add logging, especially progress on slow jobs, file counts
+-- or could post-process and remove symlinks from duplicates not from trees
+- add ignore patterns? e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
+
+longer term:
+- interactive operation for exploring changes
+- cache tree data in file system or db, allow for rapid re-scanning
+- look for superset/subset; if we meet 2 directories with a lot of dups, clump the dups together
+  and/or show differences not dups.  i.e. "/foo and /bar match except for..."
+  
