@@ -35,6 +35,13 @@
     => "e10819768b1d4d0e7249b5c5243c4464"
   )
 
+(fact "all digests are represented as positive bigints"
+  (digest-as-bigint negative-digest )
+    => #(> % 0)
+  (digest-as-bigint positive-digest )
+    => #(> % 0)
+)
+
 ; TODO: not really happy with any of these, but not clear on how to
 ; get midje to test java code easily.  Think about this further...
 

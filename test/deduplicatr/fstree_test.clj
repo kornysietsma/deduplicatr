@@ -1,10 +1,11 @@
 (ns deduplicatr.fstree-test
   (:use midje.sweet
         deduplicatr.fstree
+        [deduplicatr.file :only [make-file-summary make-dir-summary]]
         [deduplicatr.hash :only [digest-of-long]]
         [clojure.java.io :only [file]])
   (:import (java.io File RandomAccessFile)
-           (deduplicatr.file FileSummary DirSummary)))
+           (deduplicatr.file FileSummary)))
 
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
@@ -37,13 +38,13 @@
 
 (defn stub-hashfn
   "stub hash for a file - just use file name as the hash function"
-  [file] (FileSummary. file (.getName file) (.length file)))
+  [file] (make-file-summary file (.getName file) (.length file)))
 
 (defn stub-dirsummaryfn
   "stub summary for a directory - just use file count as the hash function"
-  ([file] (DirSummary. file 0 0 0)) 
+  ([file] (make-dir-summary file 0 0 0)) 
   ([prevsummary filename hash bytes] 
-     (DirSummary. 
+     (make-dir-summary
       (.file prevsummary)
       (inc (.hash prevsummary))
       (+ bytes (.bytes prevsummary))
@@ -52,11 +53,11 @@
 
 (fact "stub-dirsummaryfn simply counts files and adds sizes"
   (stub-dirsummaryfn (stub-dirsummaryfn foo-file) "foo" 1234 17)
-  => (DirSummary. foo-file 1 17 1)
+  => (make-dir-summary foo-file 1 17 1)
   (stub-dirsummaryfn
    (stub-dirsummaryfn (stub-dirsummaryfn foo-file) "foo" 1234 17)
    "bar" 2345 23)
-  => (DirSummary. foo-file 2 40 2))
+  => (make-dir-summary foo-file 2 40 2))
 
 (binding [*file-hash-fn* stub-hashfn
           *dir-summary-fn* stub-dirsummaryfn ]
@@ -65,40 +66,40 @@
     => {
         :files {}
         :dirs {}
-        :summary (DirSummary. (file simple-fixture "parent" "child" "empty_grandchild") 0 0 0)})
+        :summary (make-dir-summary (file simple-fixture "parent" "child" "empty_grandchild") 0 0 0)})
 
   (fact "treeifying a directory containg files produces a map of summaries of those files, and the directory summary"
     (treeify (file simple-fixture "ab"))
     => {
         :files {
-                "a.txt", (FileSummary. (file simple-fixture "ab" "a.txt") "a.txt", 1)
-                "b.txt", (FileSummary. (file simple-fixture "ab" "b.txt") "b.txt", 1)
+                "a.txt", (make-file-summary (file simple-fixture "ab" "a.txt") "a.txt", 1)
+                "b.txt", (make-file-summary (file simple-fixture "ab" "b.txt") "b.txt", 1)
                 }
         :dirs {}
-        :summary (DirSummary. (file simple-fixture "ab") 2 2 2)})
+        :summary (make-dir-summary (file simple-fixture "ab") 2 2 2)})
 
   (fact "treeifying a more complex directory structure produces a tree of summary information"
     (treeify (file simple-fixture "parent" "child"))
     => {
         :files {
-                "child_a.txt", (FileSummary. (file simple-fixture "parent" "child" "child_a.txt") "child_a.txt", 1)
-                "child_b.txt", (FileSummary. (file simple-fixture "parent" "child" "child_b.txt") "child_b.txt", 1)
+                "child_a.txt", (make-file-summary (file simple-fixture "parent" "child" "child_a.txt") "child_a.txt", 1)
+                "child_b.txt", (make-file-summary (file simple-fixture "parent" "child" "child_b.txt") "child_b.txt", 1)
                 }
         :dirs {
                "empty_grandchild", {
                   :files {}
                   :dirs {}
-                  :summary (DirSummary. 
+                  :summary (make-dir-summary 
                             (file simple-fixture "parent" "child" "empty_grandchild")
                             0 0 0)
                                     }
                }
-        :summary (DirSummary. (file simple-fixture "parent" "child") 2 2 2)
+        :summary (make-dir-summary (file simple-fixture "parent" "child") 2 2 2)
       })
   
 (fact "the summary of a directory includes the accumulated summary from all descendant files"
   (:summary (treeify (file simple-fixture "parent")))
-  => (DirSummary. (file simple-fixture "parent") 4 4 4))
+  => (make-dir-summary (file simple-fixture "parent") 4 4 4))
 )
 
 (fact "two directories with same contents have same hash and size"

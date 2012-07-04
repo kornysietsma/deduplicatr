@@ -1,6 +1,6 @@
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:import (deduplicatr.file FileSummary DirSummary)
+  (:import (deduplicatr.file FileSummary)
            (java.io File)))
 
 (set! *warn-on-reflection* true)
@@ -28,16 +28,16 @@
   (map (fn [n] (if (contains? n :summary) (:summary n) n)) (tree-seq #(contains? % :files) all-children root)))
 
 (defn size-and-hash-sort-key
-  [summary]
+  [^FileSummary summary]
   [(- (.bytes summary)) (.hash summary) (.getPath (.file summary))])
 
 (defn is-ancestor-of
   "checks if a file is another file's ancestor - assumes they are from same root though!"
-  [file1 file2]
+  [^File file1 ^File file2]
   (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
 
 (defn- is-summary-ancestor-of
-  [summary1 summary2]
+  [^FileSummary summary1 ^FileSummary summary2]
   (is-ancestor-of (.file summary1) (.file summary2)))
 
 (defn- is-ancestor-of-any

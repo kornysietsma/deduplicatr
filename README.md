@@ -14,17 +14,7 @@ $ lein run [base directory]
 
 This will scan all files in the directory, then print out all duplicate directories / files, largest first.  Pipe the results through "less" or similar if you get a lot of output
 
-## Limitations
-* doesn't currently know to ignore symlinks - this is a Java restriction!  Java 7 has code to recognise symlinks, earlier Java versions require hacky slow workarounds.  (I'm investigating options here still)
-* only does one thing so far - this is my MVP, more features will come in time!
-* I'm still pretty new to clojure, the code might need a bunch of cleaning and gardening!
-
-## Testing
-This is mostly test-driven code - test with midje:
-$ lein midje
-
-or with the lazytest plugin installed:
-$ lein midje --lazytest
+See the docs directory for more info.
 
 ## License
 

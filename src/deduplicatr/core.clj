@@ -3,7 +3,7 @@
         [clojure.java.io :only [file]]
         [deduplicatr.duplicates :only [duplicates]]
         [deduplicatr.fstree :only [treeify]])
-  (:import (deduplicatr.file FileSummary DirSummary))
+  (:import (deduplicatr.file FileSummary))
   (:gen-class :main true))
 
 (defn show-duplicates
@@ -15,7 +15,7 @@
   (doseq [files dups]
     (println (count files) " files of size " (.bytes (first files)))
     (doseq [summary files]
-      (if (instance? DirSummary summary)
+      (if (.is-dir summary)
         (println "   " (str (.getPath (.file summary)) "/ (" (.filecount summary) " files)"))
         (println "   " (.getPath (.file summary)))
         )))))

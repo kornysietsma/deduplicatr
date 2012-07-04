@@ -19,9 +19,20 @@
             (.read filehandle buffer 0 size)
             buffer)))
 
-(defrecord FileSummary [^File file ^BigInteger hash ^long bytes])  ; can't use "size" as defrecord defines this!
-(defrecord DirSummary [^File file ^BigInteger hash ^long bytes ^int filecount])
+;summary info about a file or a directory - is-dir is used for speed, filecount ignored for non-dirs
+; can't use "size" as defrecord defines this!
+(defrecord FileSummary
+  [^File file ^BigInteger hash ^long bytes ^boolean is-dir ^long filecount])
 
+(defn make-file-summary
+  [^File file ^BigInteger hash ^long bytes]
+  (FileSummary. file hash bytes false 1))
+
+(defn make-dir-summary
+  [^File file ^BigInteger hash ^long bytes ^long filecount]
+    (FileSummary. file hash bytes true filecount))
+
+;TODO: consider renaming this, as it actually returns a FileSummary?
 (defn file-hash
    "hash of a file - size, plus, for small files, whole file, for big files, partial hash. Also returns file size for use for stat accumulation"
    [^File file]
@@ -37,17 +48,21 @@
            (.update md (chunk-of-file raf (- size hash-chunk-size))))
          (.update md (chunk-of-file raf size 0))
        )
-       (FileSummary. file (digest-as-bigint md) size)
+       (make-file-summary file (digest-as-bigint md) size)
      )))
+
 
 (defn dir-summary
   "accumulated hash of multiple files"
-  ([^File file] (DirSummary. file (BigInteger/ZERO) 0 0))
-  ([^DirSummary prevsummary filename ^BigInteger hash size]
-    (DirSummary.
+  ; construct a dirSummary with no files
+  ([^File file]
+    (make-dir-summary file (BigInteger/ZERO) 0 0))
+  ; construct a dirSummary from a partial summary and a new file
+  ([^FileSummary prevsummary filename ^BigInteger hash size]
+    (make-dir-summary
       (.file prevsummary)
       (.add (.hash prevsummary) hash)
       (+ (.bytes prevsummary) size)
       (inc (.filecount prevsummary))
     )))
-; TODO: fix the above using 'into'
+; TODO: fix the above using 'into'?

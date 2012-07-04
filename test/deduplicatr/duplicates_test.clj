@@ -2,45 +2,46 @@
   (:use midje.sweet
           deduplicatr.duplicates
           [clojure.java.io :only [file]]
+          [deduplicatr.file :only [make-file-summary make-dir-summary]]
           [deduplicatr.fstree :only [treeify]])
-  (:import (deduplicatr.file FileSummary DirSummary)))
+  (:import (deduplicatr.file FileSummary)))
 
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
 
 (def simplest-tree {
    :files {
-      "foo.txt", (FileSummary. (file "tree" "foo.txt") 10000, 1)
+      "foo.txt", (make-file-summary (file "tree" "foo.txt") 10000, 1)
    }
    :dirs {}
-   :summary (DirSummary. (file "tree") 20000 1 1)
+   :summary (make-dir-summary (file "tree") 20000 1 1)
  })
 
 
 (def simple-tree {
    :files {
-      "foo.txt", (FileSummary. (file "tree" "foo.txt") 10000, 1)
-      "bar.txt", (FileSummary. (file "tree" "bar.txt") 20000, 10)
+      "foo.txt", (make-file-summary (file "tree" "foo.txt") 10000, 1)
+      "bar.txt", (make-file-summary (file "tree" "bar.txt") 20000, 10)
    }
    :dirs {
       "empty_child", {
         :files {}
         :dirs {}
-        :summary (DirSummary. (file "tree" "empty_child") 0 0 0) 
+        :summary (make-dir-summary (file "tree" "empty_child") 0 0 0) 
       }
       "child", {
-        :files { "foo.txt", (FileSummary. (file "tree" "child" "foo.txt") 10000, 1) }
+        :files { "foo.txt", (make-file-summary (file "tree" "child" "foo.txt") 10000, 1) }
         :dirs {}
-        :summary (DirSummary. (file "tree" "child") 10000 1 1) 
+        :summary (make-dir-summary (file "tree" "child") 10000 1 1) 
       }
     }
-    :summary (DirSummary. (file "tree") 30000 12 3)
+    :summary (make-dir-summary (file "tree") 30000 12 3)
       })
 
 (facts "fstree-seq returns a seq of the summaries in a file system tree"
    (fstree-seq simplest-tree)
-      => (just [(FileSummary. (file "tree" "foo.txt") 10000, 1)
-		             (DirSummary. (file "tree") 20000 1 1)]
+      => (just [(make-file-summary (file "tree" "foo.txt") 10000, 1)
+		             (make-dir-summary (file "tree") 20000 1 1)]
                :in-any-order)
       
    (map :file (fstree-seq simple-tree))
@@ -54,10 +55,10 @@
 
 (fact "duplicates are found by sorting nodes by decreasing size, then by hash, then by path"
       (map :file (sort-by size-and-hash-sort-key 
-               [(FileSummary. (file "foo") 100 10)
-                (FileSummary. (file "bar") 100 20)
-                (FileSummary. (file "baz") 200 20)
-                (DirSummary. (file "boo") 100 10 1)]))
+               [(make-file-summary (file "foo") 100 10)
+                (make-file-summary (file "bar") 100 20)
+                (make-file-summary (file "baz") 200 20)
+                (make-dir-summary (file "boo") 100 10 1)]))
       => [(file "bar") (file "baz") (file "boo") (file "foo")])
 
 (fact "is-ancestor-of determines if a file is an ancestor of another file"
@@ -67,12 +68,12 @@
       (is-ancestor-of (file "foo" "ba") (file "foo" "bar")) => false
 )
 (fact "without-ancestors filters a sequence of matching summaries, removing any that are ancestors of another in the seq"
-      (without-ancestors [(DirSummary. (file "root") 100 1 1)
-                           (DirSummary. (file "root" "child") 100 1 1)
-                           (DirSummary. (file "root" "child" "grandchild") 100 1 1)
-                           (DirSummary. (file "other") 100 1 1)])
-        => [(DirSummary. (file "root" "child" "grandchild") 100 1 1)
-            (DirSummary. (file "other") 100 1 1)]
+      (without-ancestors [(make-dir-summary (file "root") 100 1 1)
+                           (make-dir-summary (file "root" "child") 100 1 1)
+                           (make-dir-summary (file "root" "child" "grandchild") 100 1 1)
+                           (make-dir-summary (file "other") 100 1 1)])
+        => [(make-dir-summary (file "root" "child" "grandchild") 100 1 1)
+            (make-dir-summary (file "other") 100 1 1)]
         )
 
 (facts "duplicates returns a list of all duplicate groups in a file system tree, sorted as above, with self-ancestors removed"
@@ -82,8 +83,8 @@
    (fact "if there is a single duplicate, return a single result containing all duplicates"
       (duplicates simple-tree)
       => [[
-          (FileSummary. (file "tree" "child" "foo.txt") 10000 1)
-          (FileSummary. (file "tree" "foo.txt") 10000, 1)
+          (make-file-summary (file "tree" "child" "foo.txt") 10000 1)
+          (make-file-summary (file "tree" "foo.txt") 10000, 1)
           ]])
    (fact "if there are more than one duplicate, return them sorted as above"
          (let [complex-result (duplicates (treeify (file simple-fixture)))]

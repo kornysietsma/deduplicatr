@@ -30,4 +30,7 @@
 
 (defn digest-as-hex [^MessageDigest digest] (Hex/encodeHexString (.digest digest)))
 
-(defn digest-as-bigint [^MessageDigest digest] (BigInteger. 1 (.digest digest)))
+(defn digest-as-bigint
+  "converts a digest to a *positive* BigInteger"
+  [^MessageDigest digest]
+  (BigInteger. 1 (.digest digest)))

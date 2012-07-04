@@ -7,7 +7,7 @@
   (:import (org.apache.commons.codec.binary Hex)
            (java.security MessageDigest)
            (java.io File RandomAccessFile)
-           (deduplicatr.file FileSummary DirSummary)))
+           (deduplicatr.file FileSummary)))
 
 (def testbytes (byte-array (map byte [0 1 2 3 4 5 6 7 8 9 10 11])))
 (def testbytes-partial (byte-array (map byte [0 1 2 4 5 6 9 10 11])))
@@ -40,23 +40,23 @@
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes)
-             (FileSummary. tempfile (digest-as-bigint d) 12)))
+             (make-file-summary tempfile (digest-as-bigint d) 12)))
   (fact "hash of a file bigger than thrice the chunk size is partial"
         (binding [hash-chunk-size 3]
         (file-hash tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes-partial)
-             (FileSummary. tempfile (digest-as-bigint d) 12))))
+             (make-file-summary tempfile (digest-as-bigint d) 12))))
   (fact "hash of a zero byte file should be the same as hash of 0"
         (file-hash empty-tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 0 d)
-             (FileSummary. empty-tempfile (digest-as-bigint d) 0))))
+             (make-file-summary empty-tempfile (digest-as-bigint d) 0))))
 
 (fact "dir-summary accumulates total file count and size"
   (dir-summary (dir-summary (file "foo")) "ignored" (BigInteger/ONE) 123)
-  => (DirSummary. 
+  => (make-dir-summary
        (file "foo")
        (BigInteger/ONE)
        123
