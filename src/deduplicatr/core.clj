@@ -26,14 +26,16 @@
   (let [[options args banner]
         (cli args
              ["-h" "--help" "Show help" :default false :flag true]
-             ["-root" "root directory to scan" :default "." :parse-fn #(file %)]
              )
-        root (file (:root options))]
+        root (file (first args))]
     (when (:help options)
-      (println banner)
+      (println banner "\n followed by a directory to scan")
       (System/exit 0))
+    (when (not (= 1 (count args)))
+      (println "You must specify a directory to scan (and only one!)")
+      (System/exit 1))
     (when (not (.isDirectory root))
-      (println root " is not a valid directory")
-      (System/exit 0))
+      (println (first args) " is not a valid directory")
+      (System/exit 1))
     (show-duplicates root)
     ))
