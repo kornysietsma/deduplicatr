@@ -39,20 +39,21 @@
     files))
 
 (defn add-files-to-summaries
-  "add all files in a map of files already summarized, to a seq of summaries"
-  [summaries-so-far file-summaries-by-name]
+  "add a list of filesummaries, to each dir summary in a seq of summaries"
+  [dir-summaries-so-far file-summaries]
   (reduce
-    (fn [summaries file-and-hash]
-      (let [[_ {:keys [hash bytes]}] file-and-hash]
+    (fn [summaries file-summary]
         ; NOTE: doall to force non-laziness - without this you get stack overflows on large filesystems
-       (doall (map #(*dir-summary-fn* % hash bytes) summaries))))
-    summaries-so-far
-    file-summaries-by-name
+       (doall (map #(*dir-summary-fn* % file-summary) summaries)))
+    dir-summaries-so-far
+    file-summaries
     ))
 
 (defn treeify-and-summarize
   "traverses a directory, building a tree of contents and adding summaries of all met files to the visitors passed in
-  - returns a tuple of [(hash info about this dir),(updated summaries)]"
+   parameters are a directory, and a seq of dirSummaries that need to be updated
+     (generally, the summaries of all parents of this dir)
+   returns a tuple of [{tree of info about this dir and it's descendents},(updated directory summaries)]"
   [^File dir summaries-so-far]
     (let [my-summary (*dir-summary-fn* dir)  ; 1-arg call gives an initial summary
           children (.listFiles dir)
@@ -62,18 +63,22 @@
           summaries-including-mine (conj summaries-so-far my-summary)
          ; traverse child directories, updating summaries as we go
           [child-dir-trees summaries-including-descendants] (populate-child-dirs-and-summaries child-dirs summaries-including-mine)
-         ; calculate summaries of immediate children of this dir
+         ; calculate summaries of files in this dir
          child-file-summaries-by-name (summarize-files-by-name child-files)
-         ; and add immediate children to the summaries
-          resulting-summaries (add-files-to-summaries summaries-including-descendants child-file-summaries-by-name)
+         ; and add file summaries to the dir summaries
+          resulting-summaries (add-files-to-summaries summaries-including-descendants (.values child-file-summaries-by-name))
            ]
       [{:files child-file-summaries-by-name
         :dirs child-dir-trees
-        :summary (first resulting-summaries)}
-       (rest resulting-summaries)]
+        :summary (first resulting-summaries)}  ; pop the current directory summary off the list
+       (rest resulting-summaries)]  ; pass parent summaries back to the caller
     ))
 
 (defn treeify
-  "traverses a dir"
+  "traverses a directory, building a tree of contents as a map
+    where each node is a hash of :
+     :files -> a map of each child file (by name) and it's FileSummary
+     :dirs -> a map of each child dir (by name) and it's associated tree
+     :summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants"
   [root]
   (first (treeify-and-summarize root '())))

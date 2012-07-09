@@ -62,7 +62,7 @@
        0))
 
 (fact "dir-summary adds file hash, count and size to the initial summary"
-  (dir-summary (dir-summary (file "foo")) (BigInteger/ONE) 123)
+  (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") (BigInteger/ONE) 123))
   => (make-dir-summary
        (file "foo")
        (BigInteger/ONE)
@@ -74,10 +74,8 @@
 
 (fact "dir-summary accumulates hashes the same in any order"
   (dir-summary
-    (dir-summary (dir-summary (file "foo")) hash1 123)
-    hash2
-    456)
+    (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") hash1 123))
+    (make-file-summary (file "ignored") hash2 456))
   => (dir-summary
-       (dir-summary (dir-summary (file "foo")) hash2 456)
-       hash1
-       123))
+       (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") hash2 456))
+       (make-file-summary (file "ignored") hash1 123)))

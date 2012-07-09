@@ -43,21 +43,17 @@
 (defn stub-dirsummaryfn
   "stub summary for a directory - just use file count as the hash function"
   ([file] (make-dir-summary file 0 0 0))
-  ([prevsummary hash bytes] 
+  ([prevsummary filesummary] 
      (make-dir-summary
       (.file prevsummary)
       (inc (.hash prevsummary))
-      (+ bytes (.bytes prevsummary))
+      (+ (.bytes prevsummary) (.bytes filesummary))
       (inc (.filecount prevsummary))
       )))
 
 (fact "stub-dirsummaryfn simply counts files and adds sizes"
-  (stub-dirsummaryfn (stub-dirsummaryfn foo-file) 1234 17)
-  => (make-dir-summary foo-file 1 17 1)
-  (stub-dirsummaryfn
-   (stub-dirsummaryfn (stub-dirsummaryfn foo-file) 1234 17)
-    2345 23)
-  => (make-dir-summary foo-file 2 40 2))
+  (stub-dirsummaryfn (stub-dirsummaryfn foo-file) (make-file-summary "ignored" "ignored" 17))
+  => (make-dir-summary foo-file 1 17 1))
 
 (binding [*file-summary-fn* stub-filesummaryfn
           *dir-summary-fn* stub-dirsummaryfn]
