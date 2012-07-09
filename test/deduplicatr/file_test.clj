@@ -2,7 +2,6 @@
   (:use midje.sweet
         deduplicatr.file
         [deduplicatr.hash :only [digest-of-long add-long-to-digest! digest-as-bigint]]
-        [deduplicatr.hash-test :only [empty-digest]]
         [clojure.java.io :only [file]])
   (:import (org.apache.commons.codec.binary Hex)
            (java.security MessageDigest)
@@ -63,7 +62,7 @@
        0))
 
 (fact "dir-summary adds file hash, count and size to the initial summary"
-  (dir-summary (dir-summary (file "foo")) "ignored" (BigInteger/ONE) 123)
+  (dir-summary (dir-summary (file "foo")) (BigInteger/ONE) 123)
   => (make-dir-summary
        (file "foo")
        (BigInteger/ONE)
@@ -75,12 +74,10 @@
 
 (fact "dir-summary accumulates hashes the same in any order"
   (dir-summary
-    (dir-summary (dir-summary (file "foo")) "ignored" hash1 123)
-    "ignored two"
+    (dir-summary (dir-summary (file "foo")) hash1 123)
     hash2
     456)
   => (dir-summary
-       (dir-summary (dir-summary (file "foo")) "ignored two" hash2 456)
-      "ignored"
+       (dir-summary (dir-summary (file "foo")) hash2 456)
        hash1
        123))

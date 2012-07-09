@@ -57,12 +57,12 @@
   ([^File file]
     (make-dir-summary file (BigInteger/ZERO) 0 0))
   ; construct a dirSummary from a partial summary and a new file
-  ([^FileSummary prevsummary filename ^BigInteger hash size]
+  ([^FileSummary prevsummary ^BigInteger hash bytes]
     (make-dir-summary
       (.file prevsummary)
       (.add (.hash prevsummary) hash)
-      (+ (.bytes prevsummary) size)
+      (+ (.bytes prevsummary) bytes)
       (inc (.filecount prevsummary))
     )))
 ; TODO: fix the above using 'into'?
-; TODO: remove filename, we don't use it any more
+; TODO: consider passing a second filesummary instead of hash+bytes?

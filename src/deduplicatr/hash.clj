@@ -5,14 +5,6 @@
             (java.math BigInteger)
             (org.apache.commons.codec.binary Hex)))
 
- (defn md5
- 	"return a md5 hash of a byte array"
- 	[^bytes bytes]
- 	(let [md (MessageDigest/getInstance "MD5")]
- 		(.update md bytes)
- 		(.digest md))
- 	)
-
  (defn add-long-to-digest!
    "add a long to a digest"
    [^Long l ^MessageDigest message-digest]

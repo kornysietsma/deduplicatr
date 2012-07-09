@@ -7,15 +7,6 @@
            (java.math BigInteger)
            (java.util Random)))
 
-(fact "you can get the md5 of a string"
-	(Hex/encodeHexString (md5 (.getBytes "foo"))) => "acbd18db4cc2f85cedef654fccc4a4d8")
-
-(defn empty-digest [] (MessageDigest/getInstance "MD5"))
-
-(fact "a digest has 16 bytes"
-  (alength (.digest (empty-digest)))
-  => 16)
-
 (fact "you can digest longs" ; ok, not a great test, but it'll do for now
   (digest-as-hex (digest-of-long 1234))
     => "7c847915ab7a67822819476fe9c0fc50"
