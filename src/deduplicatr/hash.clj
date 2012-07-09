@@ -5,7 +5,6 @@
             (java.math BigInteger)
             (org.apache.commons.codec.binary Hex)))
 
-
  (defn md5
  	"return a md5 hash of a byte array"
  	[^bytes bytes]

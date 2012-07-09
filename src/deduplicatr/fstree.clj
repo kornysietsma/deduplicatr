@@ -1,10 +1,9 @@
 (ns deduplicatr.fstree
   (:use deduplicatr.hash
-        [deduplicatr.file :only [file-hash dir-summary]])
+        [deduplicatr.file :only [file-summary dir-summary]])
   (:import (java.io File RandomAccessFile)))
 
-(def ^:dynamic *file-hash-fn* deduplicatr.file/file-hash)
-
+(def ^:dynamic *file-summary-fn* deduplicatr.file/file-summary)
 (def ^:dynamic *dir-summary-fn* deduplicatr.file/dir-summary)
 
 ; note that treeify-and-summarize is called recursively from update-map-and-summaries-for-a-dir
@@ -30,25 +29,25 @@
       [{}, summaries-so-far]
       child-dirs))
 
-(defn- hash-files-by-name
-  "return a map by file name of file hash results"
+(defn- summarize-files-by-name
+  "return a map by file name of file summary"
   [files]
   (reduce
     (fn [memo ^File file]
-      (assoc memo (.getName file) (*file-hash-fn* file)))
+      (assoc memo (.getName file) (*file-summary-fn* file)))
     {}
     files))
 
 (defn add-files-to-summaries
-  "add all files in a map of files already hashed and mapped by name, to a seq of summaries"
-  [summaries-so-far file-hashes-by-name]
+  "add all files in a map of files already summarized, to a seq of summaries"
+  [summaries-so-far file-summaries-by-name]
   (reduce
     (fn [summaries file-and-hash]
       (let [[filename {:keys [hash bytes]}] file-and-hash]
         ; NOTE: doall to force non-laziness - without this you get stack overflows on large filesystems
        (doall (map #(*dir-summary-fn* % filename hash bytes) summaries))))
     summaries-so-far
-    file-hashes-by-name
+    file-summaries-by-name
     ))
 
 (defn treeify-and-summarize
@@ -63,12 +62,12 @@
           summaries-including-mine (conj summaries-so-far my-summary)
          ; traverse child directories, updating summaries as we go
           [child-dir-trees summaries-including-descendants] (populate-child-dirs-and-summaries child-dirs summaries-including-mine)
-         ; calculate hashes of immediate children of this dir
-         child-file-hashes-by-name (hash-files-by-name child-files)
+         ; calculate summaries of immediate children of this dir
+         child-file-summaries-by-name (summarize-files-by-name child-files)
          ; and add immediate children to the summaries
-          resulting-summaries (add-files-to-summaries summaries-including-descendants child-file-hashes-by-name)
+          resulting-summaries (add-files-to-summaries summaries-including-descendants child-file-summaries-by-name)
            ]
-      [{:files child-file-hashes-by-name
+      [{:files child-file-summaries-by-name
         :dirs child-dir-trees
         :summary (first resulting-summaries)}
        (rest resulting-summaries)]

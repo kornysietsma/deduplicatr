@@ -28,21 +28,21 @@
     (treeify-and-summarize baz-file ...summaries-with-foo-bar...)
     => [...baz-summary... ...summaries-with-foo-bar-baz...]))
 
-(fact "hash-files-by-name hashes a list of files and returns a map of them by name"
-  (binding [*file-hash-fn* #(str (.getName %) "_hash")]
-    (#'deduplicatr.fstree/hash-files-by-name [foo-file bar-file])
+(fact "summarize-files-by-name summarizes a list of files and returns a map of them by name"
+  (binding [*file-summary-fn* #(str (.getName %) "_hash")]
+    (#'deduplicatr.fstree/summarize-files-by-name [foo-file bar-file])
     => {"foo" "foo_hash", "bar" "bar_hash"})
   )
 
 ; TODO: test add-files-to-summaries - slipped through somehow.
 
-(defn stub-hashfn
-  "stub hash for a file - just use file name as the hash function"
+(defn stub-filesummaryfn
+  "stub summary for a file - just use file name as the hash function"
   [file] (make-file-summary file (.getName file) (.length file)))
 
 (defn stub-dirsummaryfn
   "stub summary for a directory - just use file count as the hash function"
-  ([file] (make-dir-summary file 0 0 0)) 
+  ([file] (make-dir-summary file 0 0 0))
   ([prevsummary filename hash bytes] 
      (make-dir-summary
       (.file prevsummary)
@@ -59,8 +59,8 @@
    "bar" 2345 23)
   => (make-dir-summary foo-file 2 40 2))
 
-(binding [*file-hash-fn* stub-hashfn
-          *dir-summary-fn* stub-dirsummaryfn ]
+(binding [*file-summary-fn* stub-filesummaryfn
+          *dir-summary-fn* stub-dirsummaryfn]
   (fact "treeifying an empty directory produces mostly empty results"
     (treeify (file simple-fixture "parent" "child" "empty_grandchild"))
     => {

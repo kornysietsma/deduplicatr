@@ -1,4 +1,5 @@
 TODO:
+- more test cases - especially integration tests, core.clj tests
 - ignore symlinks - either needs java 7, or JNI, or slow ugly hacks!
 -- or could post-process and remove symlinks from duplicates not from trees
 - add logging, especially progress on slow jobs, file counts

@@ -36,25 +36,33 @@
     (Hex/encodeHexString (chunk-of-file raf 12 0))
         => "000102030405060708090a0b")
   (fact "hash of a small file is the digest of the size and the contents"
-        (file-hash tempfile)
+        (file-summary tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes)
              (make-file-summary tempfile (digest-as-bigint d) 12)))
   (fact "hash of a file bigger than thrice the chunk size is partial"
         (binding [hash-chunk-size 3]
-        (file-hash tempfile)
+        (file-summary tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes-partial)
              (make-file-summary tempfile (digest-as-bigint d) 12))))
   (fact "hash of a zero byte file should be the same as hash of 0"
-        (file-hash empty-tempfile)
+        (file-summary empty-tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 0 d)
              (make-file-summary empty-tempfile (digest-as-bigint d) 0))))
 
-(fact "dir-summary accumulates total file count and size"
+(fact "dir-summary has no hash nor size nor files"
+  (dir-summary (file "foo"))
+  => (make-dir-summary
+       (file "foo")
+       (BigInteger/ZERO)
+       0
+       0))
+
+(fact "dir-summary adds file hash, count and size to the initial summary"
   (dir-summary (dir-summary (file "foo")) "ignored" (BigInteger/ONE) 123)
   => (make-dir-summary
        (file "foo")

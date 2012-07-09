@@ -50,6 +50,7 @@
   "remove summaries in a matching summary seq that are ancestors of others in the seq - assumes files sorted by path!"
   [summaries]
   (keep-indexed 
+    ; TODO: does subvec work better than nthrest?
     (fn [index item] (if (is-ancestor-of-any item (nthrest summaries (inc index))) nil item))
     summaries))
 

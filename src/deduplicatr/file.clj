@@ -33,7 +33,7 @@
     (FileSummary. file hash bytes true filecount))
 
 ;TODO: consider renaming this, as it actually returns a FileSummary?
-(defn file-hash
+(defn file-summary
    "hash of a file - size, plus, for small files, whole file, for big files, partial hash. Also returns file size for use for stat accumulation"
    [^File file]
    (let [md (MessageDigest/getInstance "MD5")
@@ -51,10 +51,9 @@
        (make-file-summary file (digest-as-bigint md) size)
      )))
 
-
 (defn dir-summary
-  "accumulated hash of multiple files"
-  ; construct a dirSummary with no files
+  "accumulated summary of multiple files"
+  ; construct a dirSummary from a directory - no files yet
   ([^File file]
     (make-dir-summary file (BigInteger/ZERO) 0 0))
   ; construct a dirSummary from a partial summary and a new file
@@ -66,3 +65,4 @@
       (inc (.filecount prevsummary))
     )))
 ; TODO: fix the above using 'into'?
+; TODO: remove filename, we don't use it any more
