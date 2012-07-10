@@ -34,6 +34,7 @@
 
 (def random (Random.))
 
+; TODO: consider using midje quickcheck stuff (in "ideas" package") instead of simple loop
 (dotimes [n 10]
   (let [rand1 (.nextLong random)
         rand2 (.nextLong random)

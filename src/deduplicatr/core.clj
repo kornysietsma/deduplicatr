@@ -13,7 +13,7 @@
         dups (duplicates tree)
         _ (println "dups found")]
   (doseq [files dups]
-    (println (count files) " files of size " (.bytes (first files)))
+    (println (count files) " matches of size " (.bytes (first files)))
     (doseq [summary files]
       (if (.is-dir summary)
         (println "   " (str (.getPath (.file summary)) "/ (" (.filecount summary) " files)"))

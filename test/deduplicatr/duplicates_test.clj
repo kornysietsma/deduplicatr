@@ -86,6 +86,8 @@
           (make-file-summary (file "tree" "child" "foo.txt") 10000 1)
           (make-file-summary (file "tree" "foo.txt") 10000, 1)
           ]])
+
+   ; TODO: redundant?  See integration test in core_test.clj
    (fact "if there are more than one duplicate, return them sorted as above"
          (let [complex-result (duplicates (treeify (file simple-fixture)))]
          (count complex-result) 
