@@ -6,7 +6,7 @@ This is a work in progress - it is currently working, but very much in a beta st
 
 ## Usage
 
-Currently this needs leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, but I haven't published this anywhere until the app is stabler.
+Currently this needs leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, for running without clojure/leiningen.
 
 Usage at this stage is simple:
 
@@ -14,7 +14,7 @@ $ lein run [base directory]
 
 This will scan all files in the directory, then print out all duplicate directories / files, largest first.  Pipe the results through "less" or similar if you get a lot of output
 
-See the docs directory for more info.
+See https://github.com/kornysietsma/deduplicatr/blob/master/doc/intro.md for more.
 
 ## License
 

@@ -1,6 +1,6 @@
 (defproject deduplicatr "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "A command-line application for identifying duplicates in a file system"
+  :url "https://github.com/kornysietsma/deduplicatr"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :repositories {"stuart" "http://stuartsierra.com/maven2"}
