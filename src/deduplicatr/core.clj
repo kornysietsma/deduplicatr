@@ -1,3 +1,8 @@
+;; ## a command-line application for finding duplicates in a file system
+;; see https://github.com/kornysietsma/deduplicatr for code and other docs
+
+;; Note that some of this is best documented through the tests - see the test directory in the source for more.
+
 (ns deduplicatr.core
   (:use [clojure.tools.cli :only [cli]]
         [clojure.java.io :only [file]]
@@ -7,21 +12,24 @@
   (:gen-class :main true))
 
 (defn show-duplicates
+  "print names of duplicate file sets to standard output"
   [root]
   (let [tree (treeify root)
         _ (println "tree parsed")
         dups (duplicates tree)
         _ (println "dups found")]
-  (doseq [files dups]
-    (println (count files) " matches of size " (.bytes (first files)))
-    (doseq [summary files]
+  (doseq [identical-files dups]
+    (println (count identical-files) " matches of size " (.bytes (first identical-files)))
+    (doseq [summary identical-files]
       (if (.is-dir summary)
         (println "   " (str (.getPath (.file summary)) "/ (" (.filecount summary) " files)"))
         (println "   " (.getPath (.file summary)))
         )))))
 
 (defn -main
-  "The main entry point"
+  "The main entry point - collects command-line arguments and calls show-duplicates.
+
+  Currently only supports a single directory, plus basic help."
   [& args]
   (let [[options args banner]
         (cli args

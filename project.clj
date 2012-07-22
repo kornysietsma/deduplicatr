@@ -1,5 +1,5 @@
 (defproject deduplicatr "0.1.0-SNAPSHOT"
-  :description "A command-line application for identifying duplicates in a file system"
+  :description "A command-line application for finding duplicates in a file system"
   :url "https://github.com/kornysietsma/deduplicatr"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

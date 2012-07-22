@@ -47,7 +47,7 @@
         => dig1)
   (fact "digests are unique"
         dig1 =not=> dig2)
-	(fact "addition of digests (as bigints) is transitive"
+	(fact "addition of digests (as bigints) is commutative"
        (.add (.add dig1 dig2) dig3) => (.add (.add dig3 dig1) dig2))
   (fact "this test depends on unique random numbers, oops"
         rand1 =not=> rand2)

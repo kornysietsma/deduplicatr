@@ -1,3 +1,5 @@
+;; ## File reading and hashing logic
+
 (ns deduplicatr.file
   (:use deduplicatr.hash)
   (:import (java.security MessageDigest)
@@ -5,11 +7,15 @@
            (java.io File RandomAccessFile)
            (org.apache.commons.codec.binary Hex)))
 
-; note mostly dynamic for testing, but it might be useful in some circumstances anyway:
-(def ^:dynamic hash-chunk-size "size of each part of a file to read for hash info" 1024)
+(def ^:dynamic hash-chunk-size
+  "File hashes for large files are based on reading this many bytes from the start, middle, and end of the file
+   (this is dynamic primarily for testing)"
+  ; TODO: consider making this not dynamic again... what is the speed impact here?
+  1024)
 
 (defn chunk-of-file
-   "return an array of bytes from a binary file
+   "read part of a binary file as a byte array
+
    note - no error handling, assumes there are [size] bytes available at [offset]"
    (^bytes [^RandomAccessFile filehandle offset] (chunk-of-file filehandle hash-chunk-size offset))
    (^bytes [^RandomAccessFile filehandle size offset]
@@ -19,22 +25,28 @@
             (.read filehandle buffer 0 size)
             buffer)))
 
-;summary info about a file or a directory - is-dir is used for speed, filecount ignored for non-dirs
-; can't use "size" as defrecord defines this!
+;; ### FileSummary holds summary info about a file or a directory
+;; * 'bytes' is the size of the file (can't use "size" as it's already defined for records)
+;; * 'is-dir' is true for a directory, false for a file
+;; * filecount is the number of files contained, 1 for a file (and generally ignored)
 (defrecord FileSummary
   [^File file ^BigInteger hash ^long bytes ^boolean is-dir ^long filecount])
 
 (defn make-file-summary
+  "construct a FileSummary record manually for a file"
   [^File file ^BigInteger hash ^long bytes]
   (FileSummary. file hash bytes false 1))
 
 (defn make-dir-summary
+  "construct a FileSummary record manually for a directory"
   [^File file ^BigInteger hash ^long bytes ^long filecount]
     (FileSummary. file hash bytes true filecount))
 
-;TODO: consider renaming this, as it actually returns a FileSummary?
 (defn file-summary
-   "hash of a file - size, plus, for small files, whole file, for big files, partial hash. Also returns file size for use for stat accumulation"
+   "Build a FileSummary for a physical file
+
+* for small files, hash is the md5sum of the file size + the binary file contents
+* for larger files, hash is the md5sum of the file size + the start of the file + the middle of the file + the end of the file"
    [^File file]
    (let [md (MessageDigest/getInstance "MD5")
          size (.length file)
@@ -52,11 +64,16 @@
      )))
 
 (defn dir-summary
-  "accumulated summary of multiple files"
-  ; construct a dirSummary from a directory - no files yet
+  "build a FileSummary for a physical directory
+
+   the single-argument version builds a summary for an empty directory
+
+   the multi-argument version builds a summary by adding a child FileSummary to an existing summary
+   - you construct directory summaries by repeatedly adding children to an empty directory summary.
+   
+   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works"
   ([^File file]
     (make-dir-summary file (BigInteger/ZERO) 0 0))
-  ; construct a dirSummary from a partial summary and a new file
   ([^FileSummary prevsummary ^FileSummary filesummary]
     (make-dir-summary
       (.file prevsummary)
@@ -64,4 +81,5 @@
       (+ (.bytes prevsummary) (.bytes filesummary))
       (+ (.filecount prevsummary) (.filecount filesummary))
     )))
-; TODO: improve the above using 'into'?
+
+;; TODO: improve the above using 'into'?  Consider a shortcut to make a dirsummary from multiple files at once?
