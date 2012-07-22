@@ -14,7 +14,10 @@ $ lein run [base directory]
 
 This will scan all files in the directory, then print out all duplicate directories / files, largest first.  Pipe the results through "less" or similar if you get a lot of output
 
-See (the wiki on github)[https://github.com/kornysietsma/deduplicatr/wiki] for more.
+## Documentation
+Introductory documentation is in [the wiki on github](https://github.com/kornysietsma/deduplicatr/wiki).
+There is also some code annotated with marginalia [here](http://cloud.github.com/downloads/kornysietsma/deduplicatr/uberdoc.html)
+Finally the [tests](https://github.com/kornysietsma/deduplicatr/tree/master/test/deduplicatr) are also a great way to understand what is going on - this project is mostly test-driven.
 
 ## License
 
