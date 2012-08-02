@@ -13,7 +13,7 @@
 (def bar-file (file "bar"))
 (def baz-file (file "baz"))
 
-(fact "populate-child-dirs-and-summaries produces a map of file names to their accumulated summaries"
+#_(fact "populate-child-dirs-and-summaries produces a map of file names to their accumulated summaries"
   (#'deduplicatr.fstree/populate-child-dirs-and-summaries 
    [foo-file bar-file baz-file] ...original-summaries...)
   => [{"foo" ...foo-summary...
@@ -28,7 +28,7 @@
     (treeify-and-summarize baz-file ...summaries-with-foo-bar...)
     => [...baz-summary... ...summaries-with-foo-bar-baz...]))
 
-(fact "summarize-files-by-name summarizes a list of files and returns a map of them by name"
+#_(fact "summarize-files-by-name summarizes a list of files and returns a map of them by name"
   (binding [*file-summary-fn* #(str (.getName %) "_hash")]
     (#'deduplicatr.fstree/summarize-files-by-name [foo-file bar-file])
     => {"foo" "foo_hash", "bar" "bar_hash"})
@@ -37,23 +37,23 @@
 ; TODO: test add-files-to-summaries - slipped through somehow.
 
 (defn stub-filesummaryfn
-  "stub summary for a file - just use file name as the hash function"
-  [file] (make-file-summary file (.getName file) (.length file)))
+  "stub summary for a file - just use 1 as the hash value"
+  [file] (make-file-summary file 1 (.length file)))
 
 (defn stub-dirsummaryfn
   "stub summary for a directory - just use file count as the hash function"
   ([file] (make-dir-summary file 0 0 0))
-  ([prevsummary filesummary] 
+  ([prevsummary & summaries] 
      (make-dir-summary
       (.file prevsummary)
-      (inc (.hash prevsummary))
-      (+ (.bytes prevsummary) (.bytes filesummary))
-      (inc (.filecount prevsummary))
+      (apply + (.hash prevsummary) (map :hash summaries))
+      (apply + (.bytes prevsummary) (map :bytes summaries))
+      (apply + (.filecount prevsummary) (map :filecount summaries))
       )))
 
 (fact "stub-dirsummaryfn simply counts files and adds sizes"
-  (stub-dirsummaryfn (stub-dirsummaryfn foo-file) (make-file-summary "ignored" "ignored" 17))
-  => (make-dir-summary foo-file 1 17 1))
+  (stub-dirsummaryfn (stub-dirsummaryfn foo-file) (make-file-summary "ignored" 1 17) (make-file-summary "ignored" 1 23))
+  => (make-dir-summary foo-file 2 40 2))
 
 (binding [*file-summary-fn* stub-filesummaryfn
           *dir-summary-fn* stub-dirsummaryfn]
@@ -68,8 +68,8 @@
     (treeify (file simple-fixture "ab"))
     => {
         :files {
-                "a.txt", (make-file-summary (file simple-fixture "ab" "a.txt") "a.txt", 1)
-                "b.txt", (make-file-summary (file simple-fixture "ab" "b.txt") "b.txt", 1)
+                "a.txt", (make-file-summary (file simple-fixture "ab" "a.txt") 1, 1)
+                "b.txt", (make-file-summary (file simple-fixture "ab" "b.txt") 1, 1)
                 }
         :dirs {}
         :summary (make-dir-summary (file simple-fixture "ab") 2 2 2)})
@@ -78,8 +78,8 @@
     (treeify (file simple-fixture "parent" "child"))
     => {
         :files {
-                "child_a.txt", (make-file-summary (file simple-fixture "parent" "child" "child_a.txt") "child_a.txt", 1)
-                "child_b.txt", (make-file-summary (file simple-fixture "parent" "child" "child_b.txt") "child_b.txt", 1)
+                "child_a.txt", (make-file-summary (file simple-fixture "parent" "child" "child_a.txt") 1, 1)
+                "child_b.txt", (make-file-summary (file simple-fixture "parent" "child" "child_b.txt") 1, 1)
                 }
         :dirs {
                "empty_grandchild", {

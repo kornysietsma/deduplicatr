@@ -29,3 +29,8 @@
    positive BigIntegers are useful as they can be added for a commutative hash-of-hashes.  See tests for more."
   [^MessageDigest digest]
   (BigInteger. 1 (.digest digest)))
+
+(defn add-bigints
+  "add any number of BigInteger values"
+  ([^BigInteger a ^BigInteger b] (.add a b))
+  ([^BigInteger a ^BigInteger b & more] (reduce add-bigints (.add a b) more)))

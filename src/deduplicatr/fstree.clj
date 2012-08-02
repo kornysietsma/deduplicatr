@@ -15,23 +15,22 @@
 ;;  as we need to keep the whole stack as we traverse the file system.
 (declare treeify-and-summarize)
 
-(defn- update-map-and-summaries-for-a-dir
+(defn- update-map-for-a-dir
   "intermediate fn for use in reduce below -
- takes a memo of [directory map so far, summaries so far] and adds a single dir to the directory map and the summaries, returning a new memo"
-  [memo ^File child-dir]
-  (let [[map-so-far summaries-so-far] memo
-        child-name (.getName child-dir)
-        [child-treeified updated-summaries] (treeify-and-summarize child-dir summaries-so-far)
+ takes a directory map so far and adds a single dir to the directory map"
+  [map-so-far ^File child-dir]
+  (let [child-name (.getName child-dir)
+        child-treeified (treeify-and-summarize child-dir)
         new-hash (assoc map-so-far child-name child-treeified)]
-      [new-hash updated-summaries]))
+      new-hash))
 
-(defn- populate-child-dirs-and-summaries
-  "takes a list of child directories, and a seq of summaries, calls treeify-and-hash on each child, updates summaries,
-  and returns a tuple of [{map of child dir trees by name} [updated summaries]] for use by caller"
-  [child-dirs summaries-so-far]
+(defn- populate-child-dirs
+  "takes a list of child directories, calls treeify-and-hash on each child
+  and returns a map of child dir trees by name"
+  [child-dirs]
   (reduce
-      update-map-and-summaries-for-a-dir
-      [{}, summaries-so-far]
+      update-map-for-a-dir
+      {}
       child-dirs))
 
 (defn- summarize-files-by-name
@@ -54,39 +53,36 @@
     file-summaries
     ))
 
-(defn treeify-and-summarize
-  "traverses a directory, building a fstree of files/directories contained, and also adds summaries of all files to the summaries-so-far parameter
+(defn treeify-and-summarize ; TODO: this is now completely redundant, merge with treeify (and of course drastically simplify)
+  "traverses a directory, building a fstree of files/directories contained"
 
-   function parameters are a directory to scan, and a seq of FileSummaries that need to be updated
-     (generally, the summaries of all parents of this dir)
-
-   returns a tuple of [{resulting fstree},(updated directory summaries)]"
-  [^File dir summaries-so-far]
+  [^File dir]
     (let [current-dir-summary (*dir-summary-fn* dir)  ; 1-arg call gives an initial summary
           children (.listFiles dir)
           child-files (filter (fn [^File f] (.isFile f)) children)
           child-dirs (filter (fn [^File f] (.isDirectory f)) children)
-          ; add current summary to summaries-so-far so we can pass it to child directories - this is basically the visitor pattern
-          summaries-including-current (conj summaries-so-far current-dir-summary)
-          ; traverse child directories, updating summaries as we go
-          [child-dir-trees summaries-including-descendants] (populate-child-dirs-and-summaries child-dirs summaries-including-current)
+          ; traverse child directories
+          child-dir-trees (populate-child-dirs child-dirs)
           ; calculate summaries of files in this dir
           child-file-summaries-by-name (summarize-files-by-name child-files)
-          ; and add file summaries to the dir summaries
-          resulting-summaries (add-files-to-summaries summaries-including-descendants (.values child-file-summaries-by-name))
+          child-file-summaries (vals child-file-summaries-by-name)
+          child-dir-summaries (map :summary (vals child-dir-trees))
+          all-child-summaries (concat child-file-summaries child-dir-summaries)
+          my-summary (if (seq all-child-summaries)
+                         (apply *dir-summary-fn* current-dir-summary (concat child-file-summaries child-dir-summaries))
+                         current-dir-summary)
          ]
-      [{:files child-file-summaries-by-name
+      {:files child-file-summaries-by-name
         :dirs child-dir-trees
-        :summary (first resulting-summaries)}  ; pop the current directory summary off the list
-       (rest resulting-summaries)]  ; pass parent summaries back to the caller
+        :summary my-summary }
     ))
 
-(defn treeify
+(defn treeify  
   "traverses a directory, building a tree of contents as a map
     where each node is a hash of :
 
-*     :files -> a map of each child file (by name) and it's FileSummary
-*     :dirs -> a map of each child dir (by name) and it's associated tree
+*     :files -> a map of each child file (by name) and it's FileSummary  TODO: could be a seq now FileSummary has a file!
+*     :dirs -> a map of each child dir (by name) and it's associated tree  TODO: could be a seq now FileSummary has a file!
 *     :summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants"
   [root]
-  (first (treeify-and-summarize root '())))
+  (treeify-and-summarize root ))

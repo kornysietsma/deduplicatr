@@ -74,12 +74,14 @@
    the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works"
   ([^File file]
     (make-dir-summary file (BigInteger/ZERO) 0 0))
-  ([^FileSummary prevsummary ^FileSummary filesummary]
+  ([^FileSummary prevsummary & summaries]  ; TODO: can we type hint the summaries? probably doesn't matter as we use :keyword
     (make-dir-summary
       (.file prevsummary)
-      (.add (.hash prevsummary) (.hash filesummary))
-      (+ (.bytes prevsummary) (.bytes filesummary))
-      (+ (.filecount prevsummary) (.filecount filesummary))
-    )))
+      (apply add-bigints (.hash prevsummary) (map :hash summaries))
+      (apply + (.bytes prevsummary) (map :bytes summaries))
+      (apply + (.filecount prevsummary) (map :filecount summaries))
+    ))
+  )
 
 ;; TODO: improve the above using 'into'?  Consider a shortcut to make a dirsummary from multiple files at once?
+

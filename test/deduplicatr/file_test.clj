@@ -69,13 +69,24 @@
        123
        1))
 
+(fact "dir-summary can add multiple summaries at once"
+  (dir-summary (dir-summary (file "foo")) 
+               (make-file-summary (file "ignored") (BigInteger/ONE) 111)
+               (make-file-summary (file "ignored") (BigInteger. "2") 222)
+               (make-file-summary (file "ignored") (BigInteger. "3") 333))
+  => (make-dir-summary
+       (file "foo")
+       (BigInteger. "6")
+       666
+       3))
+
 (def hash1 (digest-as-bigint (digest-of-long 1234)))
 (def hash2 (digest-as-bigint (digest-of-long 4567)))
 
 (fact "dir-summary accumulates hashes the same in any order"
-  (dir-summary
-    (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") hash1 123))
-    (make-file-summary (file "ignored") hash2 456))
-  => (dir-summary
-       (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") hash2 456))
-       (make-file-summary (file "ignored") hash1 123)))
+  (dir-summary (dir-summary (file "foo"))
+               (make-file-summary (file "ignored") hash1 123)
+               (make-file-summary (file "ignored") hash2 456))
+  => (dir-summary (dir-summary (file "foo"))
+                  (make-file-summary (file "ignored") hash2 456)
+                  (make-file-summary (file "ignored") hash1 123)))
