@@ -61,18 +61,16 @@
           children (.listFiles dir)
           child-files (filter (fn [^File f] (.isFile f)) children)
           child-dirs (filter (fn [^File f] (.isDirectory f)) children)
-          ; traverse child directories
-          child-dir-trees (populate-child-dirs child-dirs)
           ; calculate summaries of files in this dir
-          child-file-summaries-by-name (summarize-files-by-name child-files)
-          child-file-summaries (vals child-file-summaries-by-name)
-          child-dir-summaries (map :summary (vals child-dir-trees))
+          child-file-summaries (map *file-summary-fn* child-files)
+          child-dir-trees (map treeify-and-summarize child-dirs)
+          child-dir-summaries (map :summary child-dir-trees)
           all-child-summaries (concat child-file-summaries child-dir-summaries)
           my-summary (if (seq all-child-summaries)
-                         (apply *dir-summary-fn* current-dir-summary (concat child-file-summaries child-dir-summaries))
+                         (apply *dir-summary-fn* current-dir-summary all-child-summaries)
                          current-dir-summary)
          ]
-      {:files child-file-summaries-by-name
+      {:files child-file-summaries
         :dirs child-dir-trees
         :summary my-summary }
     ))

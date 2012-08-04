@@ -10,31 +10,31 @@
 (def simple-fixture (file fixtures "simple"))
 
 (def simplest-tree {
-   :files {
-      "foo.txt", (make-file-summary (file "tree" "foo.txt") 10000, 1)
-   }
-   :dirs {}
+   :files [
+      (make-file-summary (file "tree" "foo.txt") 10000, 1)
+   ]
+   :dirs []
    :summary (make-dir-summary (file "tree") 20000 1 1)
  })
 
 
 (def simple-tree {
-   :files {
-      "foo.txt", (make-file-summary (file "tree" "foo.txt") 10000, 1)
-      "bar.txt", (make-file-summary (file "tree" "bar.txt") 20000, 10)
-   }
-   :dirs {
-      "empty_child", {
-        :files {}
-        :dirs {}
+   :files [
+           (make-file-summary (file "tree" "foo.txt") 10000, 1)
+           (make-file-summary (file "tree" "bar.txt") 20000, 10)
+   ]
+   :dirs [
+      {
+        :files []
+        :dirs []
         :summary (make-dir-summary (file "tree" "empty_child") 0 0 0) 
       }
-      "child", {
-        :files { "foo.txt", (make-file-summary (file "tree" "child" "foo.txt") 10000, 1) }
-        :dirs {}
+      {
+        :files [(make-file-summary (file "tree" "child" "foo.txt") 10000, 1)]
+        :dirs []
         :summary (make-dir-summary (file "tree" "child") 10000 1 1) 
       }
-    }
+    ]
     :summary (make-dir-summary (file "tree") 30000 12 3)
       })
 

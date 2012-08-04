@@ -43,7 +43,7 @@
 (defn stub-dirsummaryfn
   "stub summary for a directory - just use file count as the hash function"
   ([file] (make-dir-summary file 0 0 0))
-  ([prevsummary & summaries] 
+  ([prevsummary & summaries]
      (make-dir-summary
       (.file prevsummary)
       (apply + (.hash prevsummary) (map :hash summaries))
@@ -60,36 +60,36 @@
   (fact "treeifying an empty directory produces mostly empty results"
     (treeify (file simple-fixture "parent" "child" "empty_grandchild"))
     => {
-        :files {}
-        :dirs {}
+        :files []
+        :dirs []
         :summary (make-dir-summary (file simple-fixture "parent" "child" "empty_grandchild") 0 0 0)})
 
-  (fact "treeifying a directory containg files produces a map of summaries of those files, and the directory summary"
+  (fact "treeifying a directory containg files produces a list of those files, and the directory summary"
     (treeify (file simple-fixture "ab"))
     => {
-        :files {
-                "a.txt", (make-file-summary (file simple-fixture "ab" "a.txt") 1, 1)
-                "b.txt", (make-file-summary (file simple-fixture "ab" "b.txt") 1, 1)
-                }
-        :dirs {}
+        :files [
+                (make-file-summary (file simple-fixture "ab" "a.txt") 1, 1)
+                (make-file-summary (file simple-fixture "ab" "b.txt") 1, 1)
+               ]
+        :dirs []
         :summary (make-dir-summary (file simple-fixture "ab") 2 2 2)})
 
   (fact "treeifying a more complex directory structure produces a tree of summary information"
     (treeify (file simple-fixture "parent" "child"))
     => {
-        :files {
-                "child_a.txt", (make-file-summary (file simple-fixture "parent" "child" "child_a.txt") 1, 1)
-                "child_b.txt", (make-file-summary (file simple-fixture "parent" "child" "child_b.txt") 1, 1)
+        :files [
+                (make-file-summary (file simple-fixture "parent" "child" "child_a.txt") 1, 1)
+                (make-file-summary (file simple-fixture "parent" "child" "child_b.txt") 1, 1)
+                ]
+        :dirs [
+               {
+                :files []
+                :dirs []
+                :summary (make-dir-summary 
+                           (file simple-fixture "parent" "child" "empty_grandchild")
+                           0 0 0)
                 }
-        :dirs {
-               "empty_grandchild", {
-                  :files {}
-                  :dirs {}
-                  :summary (make-dir-summary 
-                            (file simple-fixture "parent" "child" "empty_grandchild")
-                            0 0 0)
-                                    }
-               }
+               ]
         :summary (make-dir-summary (file simple-fixture "parent" "child") 2 2 2)
       })
   

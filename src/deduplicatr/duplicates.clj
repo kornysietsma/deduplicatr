@@ -8,7 +8,7 @@
   "list both child directories, and child file summaries, of a directory in a fstree structure
   - used by fstree-seq to traverse a whole tree"
   [node]
-  (concat (vals (:dirs node)) (vals (:files node))))
+  (concat (:dirs node) (:files node)))
 
 (defn- summary-of-dir-or-filesummary
   "returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)"
