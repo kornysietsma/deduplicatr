@@ -68,8 +68,7 @@
 
    the single-argument version builds a summary for an empty directory
 
-   the multi-argument version builds a summary by adding a child FileSummary to an existing summary
-   - you construct directory summaries by repeatedly adding children to an empty directory summary.
+   the multi-argument version builds a summary by adding all child FileSummaries to an existing summary
    
    the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works"
   ([^File file]
@@ -83,5 +82,4 @@
     ))
   )
 
-;; TODO: improve the above using 'into'?  Consider a shortcut to make a dirsummary from multiple files at once?
-
+;; TODO: improve the above using 'into'?

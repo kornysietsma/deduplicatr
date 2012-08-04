@@ -4,12 +4,6 @@
   (:import (deduplicatr.file FileSummary)
            (java.io File)))
 
-(defn- all-children
-  "list both child directories, and child file summaries, of a directory in a fstree structure
-  - used by fstree-seq to traverse a whole tree"
-  [node]
-  (concat (:dirs node) (:files node)))
-
 (defn- summary-of-dir-or-filesummary
   "returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)"
   [file-or-dir]
@@ -20,7 +14,11 @@
 (defn fstree-seq
   "returns a lazy sequence of the summary nodes in a fstree"
   [root]
-  (map summary-of-dir-or-filesummary (tree-seq #(contains? % :files) all-children root)))
+  (map summary-of-dir-or-filesummary 
+       (tree-seq 
+         #(contains? % :files)
+         #(concat (:dirs %) (:files %)) 
+         root)))
 
 (defn size-and-hash-sort-key
   "sort key for sorting FileSummaries by (decreasing) size, then by hash"
@@ -64,8 +62,8 @@
        (fstree-seq) ; convert to seq
        (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
        (partition-by :hash) ; partition into subseqs by hash
-       (remove #(= 1 (count %))) ; remove any with a single subseq (i.e. not a duplicate)
+       (filter next) ; remove any with a single subseq (i.e. not a duplicate)
        (map without-ancestors) ; remove ancestors
-       (remove #(= 1 (count %)))) ; remove non-duplicates again after ancestor prune
+       (filter next)) ; remove non-duplicates again after ancestor prune
 )
 
