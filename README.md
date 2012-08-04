@@ -19,6 +19,9 @@ Introductory documentation is in [the wiki on github](https://github.com/kornysi
 There is also some code annotated with marginalia [here](http://cloud.github.com/downloads/kornysietsma/deduplicatr/uberdoc.html)
 Finally the [tests](https://github.com/kornysietsma/deduplicatr/tree/master/test/deduplicatr) are also a great way to understand what is going on - this project is mostly test-driven.
 
+## Thanks
+Lots of thanks to Hank at the Melbourne clojure group for prompting some radical refactorings
+
 ## License
 
 Copyright © 2012 Kornelis Sietsma
