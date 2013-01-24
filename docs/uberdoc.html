@@ -3029,7 +3029,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>deduplicatr -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">deduplicatr</h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>A command-line application for finding duplicates in a file system</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">commons-codec/commons-codec</td><td class="dotted"><hr /></td><td class="dep-version">1.4</td></tr><tr><td class="dep-name">org.clojure/tools.cli</td><td class="dotted"><hr /></td><td class="dep-version">0.2.1</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#deduplicatr.core">deduplicatr.core</a></li><li><a href="#deduplicatr.duplicates">deduplicatr.duplicates</a></li><li><a href="#deduplicatr.file">deduplicatr.file</a></li><li><a href="#deduplicatr.fstree">deduplicatr.fstree</a></li><li><a href="#deduplicatr.hash">deduplicatr.hash</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.core" name="deduplicatr.core"><h1 class="project-name">deduplicatr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>a command-line application for finding duplicates in a file system</h2>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">commons-codec/commons-codec</td><td class="dotted"><hr /></td><td class="dep-version">1.4</td></tr><tr><td class="dep-name">bultitude</td><td class="dotted"><hr /></td><td class="dep-version">0.1.7</td></tr><tr><td class="dep-name">org.clojure/tools.cli</td><td class="dotted"><hr /></td><td class="dep-version">0.2.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#deduplicatr.core">deduplicatr.core</a></li><li><a href="#deduplicatr.duplicates">deduplicatr.duplicates</a></li><li><a href="#deduplicatr.file">deduplicatr.file</a></li><li><a href="#deduplicatr.fstree">deduplicatr.fstree</a></li><li><a href="#deduplicatr.hash">deduplicatr.hash</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.core" name="deduplicatr.core"><h1 class="project-name">deduplicatr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>a command-line application for finding duplicates in a file system</h2>
 
 <p>see https://github.com/kornysietsma/deduplicatr for code and other docs</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Note that some of this is best documented through the tests - see the test directory in the source for more.</p>
@@ -3074,11 +3074,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
   (:import (deduplicatr.file FileSummary)
-           (java.io File)))</pre></td></tr><tr><td class="docs"><p>list both child directories, and child file summaries, of a directory in a fstree structure
-  - used by fstree-seq to traverse a whole tree</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- all-children
-  [node]
-  (concat (vals (:dirs node)) (vals (:files node))))</pre></td></tr><tr><td class="docs"><p>returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)</p>
+           (java.io File)))</pre></td></tr><tr><td class="docs"><p>returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- summary-of-dir-or-filesummary
   [file-or-dir]
   (if (contains? file-or-dir :summary)
@@ -3086,7 +3082,11 @@ net.brehaut.ClojureTools = (function (SH) {
     file-or-dir))</pre></td></tr><tr><td class="docs"><p>returns a lazy sequence of the summary nodes in a fstree</p>
 </td><td class="codes"><pre class="brush: clojure">(defn fstree-seq
   [root]
-  (map summary-of-dir-or-filesummary (tree-seq #(contains? % :files) all-children root)))</pre></td></tr><tr><td class="docs"><p>sort key for sorting FileSummaries by (decreasing) size, then by hash</p>
+  (map summary-of-dir-or-filesummary 
+       (tree-seq 
+         #(contains? % :files)
+         #(concat (:dirs %) (:files %)) 
+         root)))</pre></td></tr><tr><td class="docs"><p>sort key for sorting FileSummaries by (decreasing) size, then by hash</p>
 </td><td class="codes"><pre class="brush: clojure">(defn size-and-hash-sort-key
   [^FileSummary summary]
   [(- (.bytes summary)) (.hash summary) (.getPath (.file summary))])</pre></td></tr><tr><td class="docs"><p>checks if a file is another file's ancestor - assumes they share a common root directory</p>
@@ -3119,9 +3119,9 @@ net.brehaut.ClojureTools = (function (SH) {
        (fstree-seq) ; convert to seq
        (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
        (partition-by :hash) ; partition into subseqs by hash
-       (remove #(= 1 (count %))) ; remove any with a single subseq (i.e. not a duplicate)
+       (filter next) ; remove any with a single subseq (i.e. not a duplicate)
        (map without-ancestors) ; remove ancestors
-       (remove #(= 1 (count %)))) ; remove non-duplicates again after ancestor prune)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.file" name="deduplicatr.file"><h1 class="project-name">deduplicatr.file</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>File reading and hashing logic</h2>
+       (filter next)) ; remove non-duplicates again after ancestor prune)</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.file" name="deduplicatr.file"><h1 class="project-name">deduplicatr.file</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>File reading and hashing logic</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.file
   (:use deduplicatr.hash)
@@ -3179,95 +3179,48 @@ net.brehaut.ClojureTools = (function (SH) {
 
 <p>   the single-argument version builds a summary for an empty directory</p>
 
-<p>   the multi-argument version builds a summary by adding a child FileSummary to an existing summary
-   - you construct directory summaries by repeatedly adding children to an empty directory summary.</p>
+<p>   the multi-argument version builds a summary by adding all child FileSummaries to an existing summary</p>
 
 <p>   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dir-summary
   ([^File file]
     (make-dir-summary file (BigInteger/ZERO) 0 0))
-  ([^FileSummary prevsummary ^FileSummary filesummary]
+  ([^FileSummary prevsummary &amp; summaries]  ; TODO: can we type hint the summaries? probably doesn't matter as we use :keyword
     (make-dir-summary
       (.file prevsummary)
-      (.add (.hash prevsummary) (.hash filesummary))
-      (+ (.bytes prevsummary) (.bytes filesummary))
-      (+ (.filecount prevsummary) (.filecount filesummary)))))</pre></td></tr><tr><td class="docs"><p>TODO: improve the above using 'into'?  Consider a shortcut to make a dirsummary from multiple files at once?</p>
+      (apply add-bigints (.hash prevsummary) (map :hash summaries))
+      (apply + (.bytes prevsummary) (map :bytes summaries))
+      (apply + (.filecount prevsummary) (map :filecount summaries)))))</pre></td></tr><tr><td class="docs"><p>TODO: improve the above using 'into'?</p>
 </td><td class="codes"></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.fstree" name="deduplicatr.fstree"><h1 class="project-name">deduplicatr.fstree</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Functions to build and manipulate "fstree"s - trees of file system information and summaries.</h2>
 
 <p>some of this is best documented through the tests - see the test directory in the source.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.fstree
   (:use deduplicatr.hash
         [deduplicatr.file :only [file-summary dir-summary]])
-  (:import (java.io File RandomAccessFile)))</pre></td></tr><tr><td class="docs"><p>the file summary function is declared dynamic so it can be overridden in tests</p>
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *file-summary-fn* deduplicatr.file/file-summary)</pre></td></tr><tr><td class="docs"><p>the dir summary function is declared dynamic so it can be overridden in tests</p>
-</td><td class="codes"><pre class="brush: clojure">(def ^:dynamic *dir-summary-fn* deduplicatr.file/dir-summary)</pre></td></tr><tr><td class="docs"><p>treeify-and-summarize is called recursively from update-map-and-summaries-for-a-dir
- and this is unavoidable - we can't use tail-call-optimisation in any way,
- as we need to keep the whole stack as we traverse the file system.</p>
-</td><td class="codes"><pre class="brush: clojure">(declare treeify-and-summarize)</pre></td></tr><tr><td class="docs"><p>intermediate fn for use in reduce below -
- takes a memo of [directory map so far, summaries so far] and adds a single dir to the directory map and the summaries, returning a new memo</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- update-map-and-summaries-for-a-dir
-  [memo ^File child-dir]
-  (let [[map-so-far summaries-so-far] memo
-        child-name (.getName child-dir)
-        [child-treeified updated-summaries] (treeify-and-summarize child-dir summaries-so-far)
-        new-hash (assoc map-so-far child-name child-treeified)]
-      [new-hash updated-summaries]))</pre></td></tr><tr><td class="docs"><p>takes a list of child directories, and a seq of summaries, calls treeify-and-hash on each child, updates summaries,
-  and returns a tuple of [{map of child dir trees by name} [updated summaries]] for use by caller</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- populate-child-dirs-and-summaries
-  [child-dirs summaries-so-far]
-  (reduce
-      update-map-and-summaries-for-a-dir
-      [{}, summaries-so-far]
-      child-dirs))</pre></td></tr><tr><td class="docs"><p>takes a seq of files, returns a map of their summaries by name</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- summarize-files-by-name
-  [files]
-  (reduce
-    (fn [memo ^File file]
-      (assoc memo (.getName file) (*file-summary-fn* file)))
-    {}
-    files))</pre></td></tr><tr><td class="docs"><p>add a list of filesummaries, to each dir summary in a seq of summaries</p>
-</td><td class="codes"><pre class="brush: clojure">(defn add-files-to-summaries
-  [dir-summaries-so-far file-summaries]
-  (reduce
-    (fn [summaries file-summary]
-        ; NOTE: doall to force non-laziness - without this you get stack overflows on large filesystems
-       (doall (map #(*dir-summary-fn* % file-summary) summaries)))
-    dir-summaries-so-far
-    file-summaries))</pre></td></tr><tr><td class="docs"><p>traverses a directory, building a fstree of files/directories contained, and also adds summaries of all files to the summaries-so-far parameter</p>
-
-<p>   function parameters are a directory to scan, and a seq of FileSummaries that need to be updated
-     (generally, the summaries of all parents of this dir)</p>
-
-<p>   returns a tuple of [{resulting fstree},(updated directory summaries)]</p>
-</td><td class="codes"><pre class="brush: clojure">(defn treeify-and-summarize
-  [^File dir summaries-so-far]
-    (let [current-dir-summary (*dir-summary-fn* dir)  ; 1-arg call gives an initial summary
-          children (.listFiles dir)
-          child-files (filter (fn [^File f] (.isFile f)) children)
-          child-dirs (filter (fn [^File f] (.isDirectory f)) children)
-          ; add current summary to summaries-so-far so we can pass it to child directories - this is basically the visitor pattern
-          summaries-including-current (conj summaries-so-far current-dir-summary)
-          ; traverse child directories, updating summaries as we go
-          [child-dir-trees summaries-including-descendants] (populate-child-dirs-and-summaries child-dirs summaries-including-current)
-          ; calculate summaries of files in this dir
-          child-file-summaries-by-name (summarize-files-by-name child-files)
-          ; and add file summaries to the dir summaries
-          resulting-summaries (add-files-to-summaries summaries-including-descendants (.values child-file-summaries-by-name))
-         ]
-      [{:files child-file-summaries-by-name
-        :dirs child-dir-trees
-        :summary (first resulting-summaries)}  ; pop the current directory summary off the list
-       (rest resulting-summaries)]  ; pass parent summaries back to the caller))</pre></td></tr><tr><td class="docs"><p>traverses a directory, building a tree of contents as a map
+  (:import (java.io File RandomAccessFile)))</pre></td></tr><tr><td class="docs"><p>traverses a directory, building a tree of contents as a map
     where each node is a hash of :</p>
 
 <ul>
-<li>:files -> a map of each child file (by name) and it's FileSummary</li>
-<li>:dirs -> a map of each child dir (by name) and it's associated tree</li>
+<li>:files -> a seq of each child file's FileSummary</li>
+<li>:dirs -> a seq of each child dir's tree structure</li>
 <li>:summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants</li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defn treeify
-  [root]
-  (first (treeify-and-summarize root '())))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.hash" name="deduplicatr.hash"><h1 class="project-name">deduplicatr.hash</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>utility functions for manipulating Java md5 digests</h2>
+  [^File dir]
+    (let [current-dir-summary (dir-summary dir)  ; 1-arg call gives an initial summary
+          children (.listFiles dir)
+          child-files (filter (fn [^File f] (.isFile f)) children)
+          child-dirs (filter (fn [^File f] (.isDirectory f)) children)
+          child-file-summaries (map file-summary child-files)
+          child-dir-trees (map treeify child-dirs)
+          all-child-summaries (concat child-file-summaries (map :summary child-dir-trees))
+          my-summary (if (seq all-child-summaries) ; if we have any children at all
+                         (apply dir-summary current-dir-summary all-child-summaries)
+                         current-dir-summary)
+         ]
+      {:files child-file-summaries
+        :dirs child-dir-trees
+        :summary my-summary }))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.hash" name="deduplicatr.hash"><h1 class="project-name">deduplicatr.hash</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>utility functions for manipulating Java md5 digests</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.hash
   (:import (java.security MessageDigest)
@@ -3290,5 +3243,8 @@ net.brehaut.ClojureTools = (function (SH) {
 <p>   positive BigIntegers are useful as they can be added for a commutative hash-of-hashes.  See tests for more.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn digest-as-bigint
   [^MessageDigest digest]
-  (BigInteger. 1 (.digest digest)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (BigInteger. 1 (.digest digest)))</pre></td></tr><tr><td class="docs"><p>add any number of BigInteger values</p>
+</td><td class="codes"><pre class="brush: clojure">(defn add-bigints
+  ([^BigInteger a ^BigInteger b] (.add a b))
+  ([^BigInteger a ^BigInteger b &amp; more] (reduce add-bigints (.add a b) more)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>
