@@ -14,7 +14,7 @@
 (defn show-duplicates
   "print names of duplicate file sets to standard output"
   [root]
-  (let [tree (treeify root)
+  (let [tree (treeify :root root)
         _ (println "tree parsed")
         dups (duplicates tree)
         _ (println "dups found")]

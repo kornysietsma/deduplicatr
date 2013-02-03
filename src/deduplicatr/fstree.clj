@@ -2,7 +2,7 @@
 ;; some of this is best documented through the tests - see the test directory in the source.
 (ns deduplicatr.fstree
   (:use deduplicatr.hash
-        [deduplicatr.file :only [file-summary dir-summary]])
+        [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]])
   (:import (java.io File RandomAccessFile)))
 
 (defn treeify
@@ -13,17 +13,17 @@
 *     :dirs -> a seq of each child dir's tree structure
 *     :summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants"
 
-  [^File dir]
-    (let [current-dir-summary (dir-summary dir)  ; 1-arg call gives an initial summary
+  [group ^File dir]
+    (let [initial-dir-summary (empty-dir-summary group dir)  ; 1-arg call gives an initial summary
           children (.listFiles dir)
           child-files (filter (fn [^File f] (.isFile f)) children)
           child-dirs (filter (fn [^File f] (.isDirectory f)) children)
-          child-file-summaries (map file-summary child-files)
-          child-dir-trees (map treeify child-dirs)
+          child-file-summaries (map (partial file-summary group) child-files)
+          child-dir-trees (map (partial treeify group) child-dirs)
           all-child-summaries (concat child-file-summaries (map :summary child-dir-trees))
           my-summary (if (seq all-child-summaries) ; if we have any children at all
-                         (apply dir-summary current-dir-summary all-child-summaries)
-                         current-dir-summary)
+                         (apply dir-summary initial-dir-summary all-child-summaries)
+                         initial-dir-summary)
          ]
       {:files child-file-summaries
         :dirs child-dir-trees

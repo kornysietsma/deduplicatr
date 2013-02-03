@@ -33,7 +33,9 @@
 (defn- is-summary-ancestor-of
   "checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory"
   [^FileSummary summary1 ^FileSummary summary2]
-  (is-ancestor-of (.file summary1) (.file summary2)))
+  (and
+   (= (.group summary1) (.group summary2))
+   (is-ancestor-of (.file summary1) (.file summary2))))
 
 (defn- is-ancestor-of-any
   "check if a FileSummary is the ancestor of any of a list of other FileSummaries"

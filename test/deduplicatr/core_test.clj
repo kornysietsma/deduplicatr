@@ -13,7 +13,7 @@
 (defn treeify-and-find-duplicates
   "just to keep functional testing simpler" 
   [root]
-  (duplicates (treeify root)))
+  (duplicates (treeify :root root)))
 
 (defchecker with-path-ending [expected]
   (checker [actual]

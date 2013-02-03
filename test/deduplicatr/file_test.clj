@@ -35,46 +35,49 @@
     (Hex/encodeHexString (chunk-of-file raf 12 0))
         => "000102030405060708090a0b")
   (fact "hash of a small file is the digest of the size and the contents"
-        (file-summary tempfile)
+        (file-summary :group tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes)
-             (make-file-summary tempfile (digest-as-bigint d) 12)))
+             (make-file-summary :group tempfile (digest-as-bigint d) 12)))
   (fact "hash of a file bigger than thrice the chunk size is partial"
         (binding [hash-chunk-size 3]
-        (file-summary tempfile)
+        (file-summary :group tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes-partial)
-             (make-file-summary tempfile (digest-as-bigint d) 12))))
+             (make-file-summary :group tempfile (digest-as-bigint d) 12))))
   (fact "hash of a zero byte file should be the same as hash of 0"
-        (file-summary empty-tempfile)
+        (file-summary :group empty-tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 0 d)
-             (make-file-summary empty-tempfile (digest-as-bigint d) 0))))
+             (make-file-summary :group empty-tempfile (digest-as-bigint d) 0))))
 
 (fact "dir-summary has no hash nor size nor files"
-  (dir-summary (file "foo"))
+  (empty-dir-summary :group (file "foo"))
   => (make-dir-summary
+       :group
        (file "foo")
        (BigInteger/ZERO)
        0
        0))
 
 (fact "dir-summary adds file hash, count and size to the initial summary"
-  (dir-summary (dir-summary (file "foo")) (make-file-summary (file "ignored") (BigInteger/ONE) 123))
+  (dir-summary (empty-dir-summary :group (file "foo")) (make-file-summary :group (file "ignored") (BigInteger/ONE) 123))
   => (make-dir-summary
+       :group
        (file "foo")
        (BigInteger/ONE)
        123
        1))
 
 (fact "dir-summary can add multiple summaries at once"
-  (dir-summary (dir-summary (file "foo")) 
-               (make-file-summary (file "ignored") (BigInteger/ONE) 111)
-               (make-file-summary (file "ignored") (BigInteger. "2") 222)
-               (make-file-summary (file "ignored") (BigInteger. "3") 333))
+  (dir-summary (empty-dir-summary :group (file "foo")) 
+               (make-file-summary :group (file "ignored") (BigInteger/ONE) 111)
+               (make-file-summary :group (file "ignored") (BigInteger. "2") 222)
+               (make-file-summary :group (file "ignored") (BigInteger. "3") 333))
   => (make-dir-summary
+       :group
        (file "foo")
        (BigInteger. "6")
        666
@@ -84,9 +87,9 @@
 (def hash2 (digest-as-bigint (digest-of-long 4567)))
 
 (fact "dir-summary accumulates hashes the same in any order"
-  (dir-summary (dir-summary (file "foo"))
-               (make-file-summary (file "ignored") hash1 123)
-               (make-file-summary (file "ignored") hash2 456))
-  => (dir-summary (dir-summary (file "foo"))
-                  (make-file-summary (file "ignored") hash2 456)
-                  (make-file-summary (file "ignored") hash1 123)))
+  (dir-summary (empty-dir-summary :group (file "foo"))
+               (make-file-summary :group (file "ignored") hash1 123)
+               (make-file-summary :group (file "ignored") hash2 456))
+  => (dir-summary (empty-dir-summary :group (file "foo"))
+                  (make-file-summary :group (file "ignored") hash2 456)
+                  (make-file-summary :group (file "ignored") hash1 123)))
