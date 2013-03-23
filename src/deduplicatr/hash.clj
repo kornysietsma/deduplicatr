@@ -24,13 +24,8 @@
 (defn digest-as-hex [^MessageDigest digest] (Hex/encodeHexString (.digest digest)))
 
 (defn digest-as-bigint
-  "converts a digest to a *positive* BigInteger
+  "converts a digest to a *positive* BigInt
 
-   positive BigIntegers are useful as they can be added for a commutative hash-of-hashes.  See tests for more."
+   positive BigInts are useful as they can be added for a commutative hash-of-hashes.  See tests for more."
   [^MessageDigest digest]
-  (BigInteger. 1 (.digest digest)))
-
-(defn add-bigints
-  "add any number of BigInteger values"
-  ([^BigInteger a ^BigInteger b] (.add a b))
-  ([^BigInteger a ^BigInteger b & more] (reduce add-bigints (.add a b) more)))
+  (bigint (BigInteger. 1 (.digest digest))))

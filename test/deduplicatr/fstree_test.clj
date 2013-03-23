@@ -6,7 +6,7 @@
         [clojure.java.io :only [file]])
   (:import (java.io File RandomAccessFile)
            (deduplicatr.file FileSummary)
-           (java.math BigInteger)))
+           ))
 
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
@@ -16,7 +16,7 @@
 
 (defn stub-filesummaryfn
   "stub summary for testing - just use 1 as the hash value"
-  [group file] (make-file-summary group file BigInteger/ONE (.length file)))
+  [group file] (make-file-summary group file 1N (.length file)))
 
 (with-redefs [deduplicatr.file/file-summary stub-filesummaryfn]
   (fact "treeifying an empty directory produces mostly empty results"
@@ -24,24 +24,24 @@
     => {
         :files []
         :dirs []
-        :summary (make-dir-summary :group (file simple-fixture "parent" "child" "empty_grandchild") 0 0 0)})
+        :summary (make-dir-summary :group (file simple-fixture "parent" "child" "empty_grandchild") 0N 0 0)})
 
   (fact "treeifying a directory containg files produces a list of those files, and the directory summary"
     (treeify :group (file simple-fixture "ab"))
     => {
         :files [
-                (make-file-summary :group (file simple-fixture "ab" "a.txt") 1, 1)
-                (make-file-summary :group (file simple-fixture "ab" "b.txt") 1, 1)
+                (make-file-summary :group (file simple-fixture "ab" "a.txt") 1N, 1)
+                (make-file-summary :group (file simple-fixture "ab" "b.txt") 1N, 1)
                ]
         :dirs []
-        :summary (make-dir-summary :group (file simple-fixture "ab") 2 2 2)})
+        :summary (make-dir-summary :group (file simple-fixture "ab") 2N 2 2)})
 
   (fact "treeifying a more complex directory structure produces a tree of summary information"
     (treeify :group (file simple-fixture "parent" "child"))
     => {
         :files [
-                (make-file-summary :group (file simple-fixture "parent" "child" "child_a.txt") 1, 1)
-                (make-file-summary :group (file simple-fixture "parent" "child" "child_b.txt") 1, 1)
+                (make-file-summary :group (file simple-fixture "parent" "child" "child_a.txt") 1N, 1)
+                (make-file-summary :group (file simple-fixture "parent" "child" "child_b.txt") 1N, 1)
                 ]
         :dirs [
                {
@@ -49,15 +49,15 @@
                 :dirs []
                 :summary (make-dir-summary :group 
                            (file simple-fixture "parent" "child" "empty_grandchild")
-                           0 0 0)
+                           0N 0 0)
                 }
                ]
-        :summary (make-dir-summary :group (file simple-fixture "parent" "child") 2 2 2)
+        :summary (make-dir-summary :group (file simple-fixture "parent" "child") 2N 2 2)
       })
   
 (fact "the summary of a directory includes the accumulated summary from all descendant files"
   (:summary (treeify :group (file simple-fixture "parent")))
-  => (make-dir-summary :group (file simple-fixture "parent") 4 4 4))
+  => (make-dir-summary :group (file simple-fixture "parent") 4N 4 4))
 )
 
 (fact "two directories with same contents have same hash and size"

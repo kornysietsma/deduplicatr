@@ -30,7 +30,7 @@
 ;; * 'is-dir' is true for a directory, false for a file
 ;; * filecount is the number of files contained, 1 for a file (and generally ignored)
 (defrecord FileSummary
-  [^clojure.lang.Keyword group ^File file ^BigInteger hash ^long bytes ^boolean is-dir ^long filecount])
+  [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes ^boolean is-dir ^long filecount])
 
 ;; TODO: replace these with macros if that improves performance...
 (defn make-file-summary
@@ -67,17 +67,17 @@
 (defn empty-dir-summary
   "Starting FileSummary for a directory with no files"
   [group ^File file]
-  (make-dir-summary group file (BigInteger/ZERO) 0 0))
+  (make-dir-summary group file 0N 0 0))
 
 (defn dir-summary
   "build a FileSummary for a physical directory by adding all child FileSummaries to an existing summary
    
-   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works"
+   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigInts so this works"
   [^FileSummary prevsummary & summaries]  ; TODO: can we type hint the summaries? probably doesn't matter as we use :keyword
     (make-dir-summary
       (.group prevsummary)
       (.file prevsummary)
-      (apply add-bigints (.hash prevsummary) (map :hash summaries))
+      (apply + (.hash prevsummary) (map :hash summaries))
       (apply + (.bytes prevsummary) (map :bytes summaries))
       (apply + (.filecount prevsummary) (map :filecount summaries))
     ))

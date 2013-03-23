@@ -4,7 +4,6 @@
   (:import (org.apache.commons.codec.binary Hex)
            (java.security MessageDigest)
            (java.io File RandomAccessFile)
-           (java.math BigInteger)
            (java.util Random)))
 
 (fact "you can digest longs" ; ok, not a great test, but it'll do for now
@@ -16,13 +15,13 @@
 (def negative-digest (digest-of-long 4444))
 
 (fact "you can get a digest as a bigint"
-  (.toString (digest-as-bigint positive-digest) 16)
-    => "7c847915ab7a67822819476fe9c0fc50"
+  (str (digest-as-bigint positive-digest) 16)
+  => "16551211055107953457286736392092234452816"
   )
 
 (fact "you can get a digest with a negative binary representation as a bigint"
-  (.toString (digest-as-bigint negative-digest ) 16)
-    => "e10819768b1d4d0e7249b5c5243c4464"
+  (str (digest-as-bigint negative-digest ) 16)
+  => "29911835387869145710198196729855058032416"
   )
 
 (fact "all digests are represented as positive bigints"
@@ -32,13 +31,8 @@
     => #(> % 0)
 )
 
-(fact "you can add multiple bigints"
-      (add-bigints (BigInteger. "1") (BigInteger. "2") (BigInteger. "3") (BigInteger. "4"))
-      => (BigInteger. "10"))
-
 (def random (Random.))
 
-; TODO: consider using midje quickcheck stuff (in "ideas" package") instead of simple loop
 (dotimes [n 10]
   (let [rand1 (.nextLong random)
         rand2 (.nextLong random)
@@ -51,11 +45,10 @@
         => dig1)
   (fact "digests are unique"
         dig1 =not=> dig2)
-	(fact "addition of digests (as bigints) is commutative"
-       (add-bigints dig1 dig2 dig3) => (add-bigints dig3 dig1 dig2))
+	(fact "addition of digests (as bigints) is transitive"
+       (.add (.add dig1 dig2) dig3) => (.add (.add dig3 dig1) dig2))
   (fact "this test depends on unique random numbers, oops"
         rand1 =not=> rand2)
   (fact "this test depends on unique random numbers, oops"
         rand2 =not=> rand3)
-))
- 
+)) 

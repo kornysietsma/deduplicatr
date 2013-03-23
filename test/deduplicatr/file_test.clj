@@ -58,28 +58,28 @@
   => (make-dir-summary
        :group
        (file "foo")
-       (BigInteger/ZERO)
+       0N
        0
        0))
 
 (fact "dir-summary adds file hash, count and size to the initial summary"
-  (dir-summary (empty-dir-summary :group (file "foo")) (make-file-summary :group (file "ignored") (BigInteger/ONE) 123))
+  (dir-summary (empty-dir-summary :group (file "foo")) (make-file-summary :group (file "ignored") 1N 123))
   => (make-dir-summary
        :group
        (file "foo")
-       (BigInteger/ONE)
+       1N
        123
        1))
 
 (fact "dir-summary can add multiple summaries at once"
   (dir-summary (empty-dir-summary :group (file "foo")) 
-               (make-file-summary :group (file "ignored") (BigInteger/ONE) 111)
-               (make-file-summary :group (file "ignored") (BigInteger. "2") 222)
-               (make-file-summary :group (file "ignored") (BigInteger. "3") 333))
+               (make-file-summary :group (file "ignored") 1N 111)
+               (make-file-summary :group (file "ignored") 2N 222)
+               (make-file-summary :group (file "ignored") 3N 333))
   => (make-dir-summary
        :group
        (file "foo")
-       (BigInteger. "6")
+       6N
        666
        3))
 

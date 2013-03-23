@@ -27,15 +27,14 @@
         )))))
 
 (defn -main
-  "The main entry point - collects command-line arguments and calls show-duplicates.
-
-  Currently only supports a single directory, plus basic help."
+  "The main entry point - collects command-line arguments and calls show-duplicates."
   [& args]
   (let [[options args banner]
         (cli args
              ["-h" "--help" "Show help" :default false :flag true]
              )
         root (file (first args))]
+    ; warning: procedural code follows!
     (when (:help options)
       (println banner "\n followed by a directory to scan")
       (System/exit 0))
