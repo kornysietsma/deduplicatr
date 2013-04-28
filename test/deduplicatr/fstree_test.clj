@@ -1,12 +1,9 @@
 (ns deduplicatr.fstree-test
-  (:use midje.sweet
-        deduplicatr.fstree
-        [deduplicatr.file :only [make-file-summary make-dir-summary file-summary]]
-        [deduplicatr.hash :only [digest-of-long]]
-        [clojure.java.io :only [file]])
-  (:import (java.io File RandomAccessFile)
-           (deduplicatr.file FileSummary)
-           ))
+  (:require [midje.sweet :refer :all]
+            [deduplicatr.fstree :refer :all]
+            [deduplicatr.file :as df]
+            [deduplicatr.hash :as dh]
+            [clojure.java.io :refer [file]]))
 
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
@@ -16,36 +13,36 @@
 
 (defn stub-filesummaryfn
   "stub summary for testing - just use 1 as the hash value"
-  [group file] (make-file-summary group file 1N (.length file)))
+  [group file] (df/->FileSummary group file 1N (.length file)))
 
-(with-redefs [deduplicatr.file/file-summary stub-filesummaryfn]
+(with-redefs [df/file-summary stub-filesummaryfn]
   (fact "treeifying an empty directory produces mostly empty results"
     (treeify :group (file simple-fixture "parent" "child" "empty_grandchild"))
     => {:files []
         :dirs []
-        :summary (make-dir-summary :group (file simple-fixture "parent" "child" "empty_grandchild") 0N 0 0)})
+        :summary (df/->DirSummary :group (file simple-fixture "parent" "child" "empty_grandchild") 0N 0 0)})
 
   (fact "treeifying a directory containg files produces a list of those files, and the directory summary"
     (treeify :group (file simple-fixture "ab"))
-    => {:files [(make-file-summary :group (file simple-fixture "ab" "a.txt") 1N, 1)
-                (make-file-summary :group (file simple-fixture "ab" "b.txt") 1N, 1)]
+    => {:files [(df/->FileSummary :group (file simple-fixture "ab" "a.txt") 1N, 1)
+                (df/->FileSummary :group (file simple-fixture "ab" "b.txt") 1N, 1)]
         :dirs []
-        :summary (make-dir-summary :group (file simple-fixture "ab") 2N 2 2)})
+        :summary (df/->DirSummary :group (file simple-fixture "ab") 2N 2 2)})
 
   (fact "treeifying a more complex directory structure produces a tree of summary information"
     (treeify :group (file simple-fixture "parent" "child"))
-    => {:files [(make-file-summary :group (file simple-fixture "parent" "child" "child_a.txt") 1N, 1)
-                (make-file-summary :group (file simple-fixture "parent" "child" "child_b.txt") 1N, 1)]
+    => {:files [(df/->FileSummary :group (file simple-fixture "parent" "child" "child_a.txt") 1N, 1)
+                (df/->FileSummary :group (file simple-fixture "parent" "child" "child_b.txt") 1N, 1)]
         :dirs [{:files []
                 :dirs []
-                :summary (make-dir-summary :group 
+                :summary (df/->DirSummary :group 
                                            (file simple-fixture "parent" "child" "empty_grandchild")
                                            0N 0 0)}]
-        :summary (make-dir-summary :group (file simple-fixture "parent" "child") 2N 2 2)})
+        :summary (df/->DirSummary :group (file simple-fixture "parent" "child") 2N 2 2)})
   
   (fact "the summary of a directory includes the accumulated summary from all descendant files"
     (:summary (treeify :group (file simple-fixture "parent")))
-    => (make-dir-summary :group (file simple-fixture "parent") 4N 4 4)))
+    => (df/->DirSummary :group (file simple-fixture "parent") 4N 4 4)))
 
 (fact "two directories with same contents have same hash and size"
    (let [tree1 (treeify :group (file simple-fixture "ab"))

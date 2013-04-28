@@ -25,23 +25,32 @@
             (.read filehandle buffer 0 size)
             buffer)))
 
-;; ### FileSummary holds summary info about a file or a directory
-;; * 'bytes' is the size of the file (can't use "size" as it's already defined for records)
-;; * 'is-dir' is true for a directory, false for a file
-;; * filecount is the number of files contained, 1 for a file (and generally ignored)
+(defprotocol Summary
+  (file-count [this])
+  (print-summary [this]))
+
+;; ### FileSummary holds summary info about a file
+;; * 'bytes' is the size of the file (can't use "size" as it's already
+;; defined for records)
 (defrecord FileSummary
-  [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes ^boolean is-dir ^long filecount])
+    [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes]
+  Summary
+  (file-count [this]
+    1)
+  (print-summary [this]
+    (.getPath (.file this))))
 
-;; TODO: replace these with macros if that improves performance...
-(defn make-file-summary
-  "construct a FileSummary record manually for a file"
-  [group file hash bytes]
-  (FileSummary. group file hash bytes false 1))
+;; ### DirSummary holds summary info about a dir
+;; * 'bytes' is the cumulative size
+;; * filecount is the total number of files contained
+(defrecord DirSummary
+    [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes ^long filecount]
+  Summary
+  (file-count [this]
+    (.filecount this))
+  (print-summary [this]
+     (str (.getPath (.file this)) "/ (" (.filecount this) " files)")))
 
-(defn make-dir-summary
-  "construct a FileSummary record manually for a directory"
-  [group file hash bytes filecount]
-    (FileSummary. group file hash bytes true filecount))
 
 (defn file-summary
    "Build a FileSummary for a physical file
@@ -61,25 +70,24 @@
            (.update md (chunk-of-file raf (- size hash-chunk-size))))
          (.update md (chunk-of-file raf size 0))
        )
-       (make-file-summary group file (digest-as-bigint md) size)
+       (->FileSummary group file (digest-as-bigint md) size)
      )))
 
 (defn empty-dir-summary
   "Starting FileSummary for a directory with no files"
   [group ^File file]
-  (make-dir-summary group file 0N 0 0))
+  (->DirSummary group file 0N 0 0))
 
 (defn dir-summary
-  "build a FileSummary for a physical directory by adding all child FileSummaries to an existing summary
+  "build a DirSummary for a physical directory by adding all child FileSummaries to an existing summary
    
    the directory hash is simply the sum of individual child hashes - we store hashes as positive BigInts so this works"
-  [^FileSummary prevsummary & summaries]  ; TODO: can we type hint the summaries? probably doesn't matter as we use :keyword
-    (make-dir-summary
+  [^DirSummary prevsummary & summaries] 
+    (->DirSummary
       (.group prevsummary)
       (.file prevsummary)
       (apply + (.hash prevsummary) (map :hash summaries))
       (apply + (.bytes prevsummary) (map :bytes summaries))
-      (apply + (.filecount prevsummary) (map :filecount summaries))
+      (apply + (.filecount prevsummary) (map file-count summaries))
     ))
 
-;; TODO: improve the above using 'into'?

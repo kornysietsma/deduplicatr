@@ -21,9 +21,9 @@
          root)))
 
 (defn size-and-hash-sort-key
-  "sort key for sorting FileSummaries by (decreasing) size, then by hash"
-  [^FileSummary summary]
-  [(- (.bytes summary)) (.hash summary) (.getPath (.file summary))])
+  "sort key for sorting Summaries by (decreasing) size, then by hash"
+  [summary]
+  [(- (:bytes summary)) (:hash summary) (.getPath (:file summary))])
 
 (defn is-ancestor-of
   "checks if a file is another file's ancestor - assumes they share a common root directory"
@@ -32,13 +32,13 @@
 
 (defn is-summary-ancestor-of
   "checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory"
-  [^FileSummary summary1 ^FileSummary summary2]
+  [summary1 summary2]
   (and
-   (= (.group summary1) (.group summary2))
-   (is-ancestor-of (.file summary1) (.file summary2))))
+   (= (:group summary1) (:group summary2))
+   (is-ancestor-of (:file summary1) (:file summary2))))
 
 (defn- is-ancestor-of-any
-  "check if a FileSummary is the ancestor of any of a list of other FileSummaries"
+  "check if a summary is the ancestor of any of a list of other FileSummaries"
   [summary summaries]
   (if (isa? FileSummary summary)
     false

@@ -3,7 +3,8 @@
   (:require [clojure.java.io :refer [file]]
             [clojure.tools.cli :refer [cli]]
             [deduplicatr.duplicates :refer [duplicates]]
-            [deduplicatr.fstree :refer [treeify]])
+            [deduplicatr.fstree :refer [treeify]]
+            [deduplicatr.file :refer [print-summary]])
   (:gen-class :main true))
 
 ;; ## a command-line application for finding duplicates in a file system
@@ -21,10 +22,7 @@
   (doseq [identical-files dups]
     (println (count identical-files) " matches of size " (.bytes (first identical-files)))
     (doseq [summary identical-files]
-      (if (.is-dir summary)
-        (println "   " (str (.getPath (.file summary)) "/ (" (.filecount summary) " files)"))
-        (println "   " (.getPath (.file summary)))
-        )))))
+      (println "    " (print-summary summary))))))
 
 (defn -main
   "The main entry point - collects command-line arguments and calls show-duplicates."

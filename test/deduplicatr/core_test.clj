@@ -23,26 +23,26 @@
       (treeify-and-find-duplicates simple-fixture)
       => (just
            (three-of 
-             (contains {:bytes 2, :is-dir true, :filecount 2}))
+             (contains {:bytes 2, :filecount 2}))
            (four-of
-             (contains {:bytes 1, :is-dir false, :file (with-path-ending "b.txt")}))
+             (contains {:bytes 1, :file (with-path-ending "b.txt")}))
            (four-of
-             (contains {:bytes 1, :is-dir false, :file (with-path-ending "a.txt")}))
+             (contains {:bytes 1, :file (with-path-ending "a.txt")}))
            )
       (treeify-and-find-duplicates complex-fixture)
       => (just
            (just
-             (contains {:bytes 108, :is-dir false, :file (with-path-ending "big_files/my_old_file.txt")})
-             (contains {:bytes 108, :is-dir false, :file (with-path-ending "big_files/my_other_old_file.txt")})
+             (contains {:bytes 108, :file (with-path-ending "big_files/my_old_file.txt")})
+             (contains {:bytes 108, :file (with-path-ending "big_files/my_other_old_file.txt")})
              :in-any-order)             
            (two-of 
-             (contains {:bytes 14, :is-dir true, :filecount 3, :file (with-path-ending "123")}))
+             (contains {:bytes 14, :filecount 3, :file (with-path-ending "123")}))
            (three-of
-             (contains {:bytes 6, :is-dir false, :file (with-path-ending "three.txt")}))
+             (contains {:bytes 6, :file (with-path-ending "three.txt")}))
            (three-of
-             (contains {:bytes 4, :is-dir false, :file (with-path-ending "two.txt")}))
+             (contains {:bytes 4, :file (with-path-ending "two.txt")}))
            (three-of
-             (contains {:bytes 4, :is-dir false, :file (with-path-ending "one.txt")}))
+             (contains {:bytes 4, :file (with-path-ending "one.txt")}))
            )
       )
 

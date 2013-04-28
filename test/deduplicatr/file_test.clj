@@ -6,7 +6,7 @@
   (:import (org.apache.commons.codec.binary Hex)
            (java.security MessageDigest)
            (java.io File RandomAccessFile)
-           (deduplicatr.file FileSummary)))
+           (deduplicatr.file FileSummary DirSummary)))
 
 (def testbytes (byte-array (map byte [0 1 2 3 4 5 6 7 8 9 10 11])))
 (def testbytes-partial (byte-array (map byte [0 1 2 4 5 6 9 10 11])))
@@ -39,23 +39,23 @@
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes)
-             (make-file-summary :group tempfile (digest-as-bigint d) 12)))
+             (->FileSummary :group tempfile (digest-as-bigint d) 12)))
   (fact "hash of a file bigger than thrice the chunk size is partial"
         (binding [hash-chunk-size 3]
         (file-summary :group tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 12 d)
              (.update d testbytes-partial)
-             (make-file-summary :group tempfile (digest-as-bigint d) 12))))
+             (->FileSummary :group tempfile (digest-as-bigint d) 12))))
   (fact "hash of a zero byte file should be the same as hash of 0"
         (file-summary :group empty-tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 0 d)
-             (make-file-summary :group empty-tempfile (digest-as-bigint d) 0))))
+             (->FileSummary :group empty-tempfile (digest-as-bigint d) 0))))
 
 (fact "dir-summary has no hash nor size nor files"
   (empty-dir-summary :group (file "foo"))
-  => (make-dir-summary
+  => (->DirSummary
        :group
        (file "foo")
        0N
@@ -63,8 +63,8 @@
        0))
 
 (fact "dir-summary adds file hash, count and size to the initial summary"
-  (dir-summary (empty-dir-summary :group (file "foo")) (make-file-summary :group (file "ignored") 1N 123))
-  => (make-dir-summary
+  (dir-summary (empty-dir-summary :group (file "foo")) (->FileSummary :group (file "ignored") 1N 123))
+  => (->DirSummary
        :group
        (file "foo")
        1N
@@ -73,10 +73,10 @@
 
 (fact "dir-summary can add multiple summaries at once"
   (dir-summary (empty-dir-summary :group (file "foo")) 
-               (make-file-summary :group (file "ignored") 1N 111)
-               (make-file-summary :group (file "ignored") 2N 222)
-               (make-file-summary :group (file "ignored") 3N 333))
-  => (make-dir-summary
+               (->FileSummary :group (file "ignored") 1N 111)
+               (->FileSummary :group (file "ignored") 2N 222)
+               (->FileSummary :group (file "ignored") 3N 333))
+  => (->DirSummary
        :group
        (file "foo")
        6N
@@ -88,8 +88,8 @@
 
 (fact "dir-summary accumulates hashes the same in any order"
   (dir-summary (empty-dir-summary :group (file "foo"))
-               (make-file-summary :group (file "ignored") hash1 123)
-               (make-file-summary :group (file "ignored") hash2 456))
+               (->FileSummary :group (file "ignored") hash1 123)
+               (->FileSummary :group (file "ignored") hash2 456))
   => (dir-summary (empty-dir-summary :group (file "foo"))
-                  (make-file-summary :group (file "ignored") hash2 456)
-                  (make-file-summary :group (file "ignored") hash1 123)))
+                  (->FileSummary :group (file "ignored") hash2 456)
+                  (->FileSummary :group (file "ignored") hash1 123)))
