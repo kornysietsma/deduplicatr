@@ -1,15 +1,15 @@
+(ns deduplicatr.core
+  "a command-line application for finding duplicates in a file system"
+  (:require [clojure.java.io :refer [file]]
+            [clojure.tools.cli :refer [cli]]
+            [deduplicatr.duplicates :refer [duplicates]]
+            [deduplicatr.fstree :refer [treeify]])
+  (:gen-class :main true))
+
 ;; ## a command-line application for finding duplicates in a file system
 ;; see https://github.com/kornysietsma/deduplicatr for code and other docs
 
 ;; Note that some of this is best documented through the tests - see the test directory in the source for more.
-
-(ns deduplicatr.core
-  (:use [clojure.tools.cli :only [cli]]
-        [clojure.java.io :only [file]]
-        [deduplicatr.duplicates :only [duplicates]]
-        [deduplicatr.fstree :only [treeify]])
-  (:import (deduplicatr.file FileSummary))
-  (:gen-class :main true))
 
 (defn show-duplicates
   "print names of duplicate file sets to standard output"

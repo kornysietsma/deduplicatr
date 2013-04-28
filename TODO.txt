@@ -5,6 +5,7 @@ TODO:
 - handle multiple sources - pretty critical
 - add logging, especially progress on slow jobs, file counts
 - add ignore patterns? e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
+- should I have two records rather than one for filesummary/dirsummary?
 
 longer term:
 - cache tree data in file or db, allow for rapid re-scanning, comparing to non-mounted media.

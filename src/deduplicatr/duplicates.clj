@@ -30,7 +30,7 @@
   [^File file1 ^File file2]
   (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
 
-(defn- is-summary-ancestor-of
+(defn is-summary-ancestor-of
   "checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory"
   [^FileSummary summary1 ^FileSummary summary2]
   (and

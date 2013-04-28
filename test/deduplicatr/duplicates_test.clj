@@ -65,9 +65,14 @@
       (is-ancestor-of (file "foo") (file "foo")) => false
       (is-ancestor-of (file "foo") (file "foo" "bar")) => true
       (is-ancestor-of (file "foo") (file "foo" "bar" "baz")) => true
-      (is-ancestor-of (file "foo" "ba") (file "foo" "bar")) => false
-)
-;(fact "is-ancestor-of won't match files in different groups")
+      (is-ancestor-of (file "foo" "ba") (file "foo" "bar")) => false)
+
+(fact "is-summary-ancestor-of won't match files in different groups"
+  (is-summary-ancestor-of (make-file-summary :a (file "foo") 1 1)
+                          (make-file-summary :a (file "foo" "bar") 1 1)) => true
+  (is-summary-ancestor-of (make-file-summary :a (file "foo") 1 1)
+                          (make-file-summary :b (file "foo" "bar") 1 1)) => false)
+
 (fact "without-ancestors filters a sequence of matching summaries, removing any that are ancestors of another in the seq"
       (without-ancestors [(make-dir-summary :group (file "root") 100 1 1)
                            (make-dir-summary :group (file "root" "child") 100 1 1)
