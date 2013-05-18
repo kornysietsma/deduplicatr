@@ -29,8 +29,7 @@
   [& args]
   (let [[options args banner]
         (cli args
-             ["-h" "--help" "Show help" :default false :flag true]
-             )
+             ["-h" "--help" "Show help" :default false :flag true])
         root (file (first args))]
     ; warning: procedural code follows!
     (when (:help options)

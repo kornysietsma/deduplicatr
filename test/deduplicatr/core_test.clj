@@ -1,10 +1,10 @@
 (ns deduplicatr.core-test
-  (:use midje.sweet
-        deduplicatr.core
-        [deduplicatr.duplicates :only [duplicates]]
-        [deduplicatr.fstree :only [treeify]]
-        [clojure.java.io :only [file]])
-  (:import (java.io File)))
+  (:require
+   [midje.sweet :refer :all]
+   [deduplicatr.core :refer :all]
+   [deduplicatr.duplicates :refer [duplicates]]
+   [deduplicatr.fstree :refer [treeify]]
+   [clojure.java.io :refer [file]]))
 
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
@@ -16,33 +16,47 @@
   (duplicates (treeify :root root)))
 
 (defchecker with-path-ending [expected]
-  (checker [actual]
-    (.endsWith (.getPath actual) expected)))
+  (chatty-checker [actual]
+                  (.endsWith (.getPath actual) expected)))
+
+(defchecker file-like [bytes path-end]
+  (every-checker
+   (chatty-checker [actual] (= bytes (:bytes actual)))
+   (chatty-checker [actual] (.endsWith (.getPath (:file actual)) path-end))))
+
+(defchecker dir-like [bytes filecount]
+  (every-checker
+   (chatty-checker [actual] (= bytes (:bytes actual)))
+   (chatty-checker [actual] (= filecount (:filecount actual)))))
+
+(defchecker dir-like-with-path [bytes filecount path-end]
+  (every-checker
+   (chatty-checker [actual] (= bytes (:bytes actual)))
+   (chatty-checker [actual] (= filecount (:filecount actual)))
+   (chatty-checker [actual] (.endsWith (.getPath (:file actual)) path-end))))
 
 (fact "duplicates in a tree include all duplicate sets in descending size order"
-      (treeify-and-find-duplicates simple-fixture)
-      => (just
-           (three-of 
-             (contains {:bytes 2, :filecount 2}))
-           (four-of
-             (contains {:bytes 1, :file (with-path-ending "b.txt")}))
-           (four-of
-             (contains {:bytes 1, :file (with-path-ending "a.txt")}))
-           )
-      (treeify-and-find-duplicates complex-fixture)
-      => (just
-           (just
-             (contains {:bytes 108, :file (with-path-ending "big_files/my_old_file.txt")})
-             (contains {:bytes 108, :file (with-path-ending "big_files/my_other_old_file.txt")})
-             :in-any-order)             
-           (two-of 
-             (contains {:bytes 14, :filecount 3, :file (with-path-ending "123")}))
-           (three-of
-             (contains {:bytes 6, :file (with-path-ending "three.txt")}))
-           (three-of
-             (contains {:bytes 4, :file (with-path-ending "two.txt")}))
-           (three-of
-             (contains {:bytes 4, :file (with-path-ending "one.txt")}))
-           )
-      )
+  (treeify-and-find-duplicates simple-fixture)
+  => (just
+      (three-of
+       (dir-like 2 2))
+      (four-of
+       (file-like 1 "b.txt"))
+      (four-of
+       (file-like 1 "a.txt")))
+  
+  (treeify-and-find-duplicates complex-fixture)
+  => (just
+      (just
+       (file-like 108 "big_files/my_old_file.txt")
+       (file-like 108 "big_files/my_other_old_file.txt")
+       :in-any-order)             
+      (two-of
+       (dir-like-with-path 14 3 "123"))
+      (three-of
+       (file-like 6 "three.txt"))
+      (three-of
+       (file-like 4 "two.txt"))
+      (three-of
+       (file-like 4 "one.txt"))))
 
