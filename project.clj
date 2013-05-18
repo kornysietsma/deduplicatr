@@ -1,5 +1,5 @@
-(defproject deduplicatr "0.1.0-SNAPSHOT"
-  :description "A command-line application for finding duplicates in a file system"
+(defproject deduplicatr "0.2.0-SNAPSHOT"
+  :description "A command-line application for finding duplicate files and directories"
   :url "https://github.com/kornysietsma/deduplicatr"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -11,5 +11,5 @@
                              [lein-marginalia "0.7.1"]]  }}
   :min-lein-version "2.0.0"
   :main deduplicatr.core
-  :jvm-opts ["-Xmx1024m" "-Xss100m"] 
+  :jvm-opts ["-Xmx2048m" "-Xss100m"] 
 )
