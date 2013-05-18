@@ -11,6 +11,11 @@
 (def testbytes (byte-array (map byte [0 1 2 3 4 5 6 7 8 9 10 11])))
 (def testbytes-partial (byte-array (map byte [0 1 2 4 5 6 9 10 11])))
 
+(fact "relative paths can be determined"
+  (relative-path (file "base") (file "base" "child" "grandchild")) => "child/grandchild")
+(fact "relative paths do nothing if child is not under base"
+  (relative-path (file "foo") (file "bar" "baz")) => "bar/baz")
+
 (against-background
   [(around :contents
            (let [tempfile (File/createTempFile "deduplicatr_test" ".tmp")

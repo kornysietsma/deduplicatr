@@ -54,18 +54,17 @@
     summaries))
 
 (defn duplicates
-  "finds duplicate directory/file sets in a fstree
-
+  "finds duplicate directory/file sets in seq of fstrees
    * returns a seq of seqs of identical files/directories
    * results are sorted so the largest sets are first
+   * assumes fstrees know about groups already
    "
-  [tree]
-  (->> tree
-       (fstree-seq) ; convert to seq
+  [trees]
+  (->> trees
+       (#(flatten (map fstree-seq %)))
        (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
        (partition-by :hash) ; partition into subseqs by hash
        (filter next) ; remove any with a single subseq (i.e. not a duplicate)
        (map without-ancestors) ; remove ancestors
        (filter next)) ; remove non-duplicates again after ancestor prune
 )
-

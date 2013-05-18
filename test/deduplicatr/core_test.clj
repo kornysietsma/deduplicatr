@@ -10,53 +10,75 @@
 (def simple-fixture (file fixtures "simple"))
 (def complex-fixture (file fixtures "complex"))
 
-(defn treeify-and-find-duplicates
+(defmacro with-out-ignored
+  [& body]
+  `(
+    binding [*out* (new java.io.StringWriter)]
+    ~@body
+       ))
+
+(defn find-dups-quietly
   "just to keep functional testing simpler" 
-  [root]
-  (duplicates (treeify :root root)))
+  [roots]
+  (with-out-ignored
+    (find-dups roots)))
 
 (defchecker with-path-ending [expected]
   (chatty-checker [actual]
                   (.endsWith (.getPath actual) expected)))
 
-(defchecker file-like [bytes path-end]
+(defchecker file-like
+  [{:keys [group bytes name]}]
   (every-checker
-   (chatty-checker [actual] (= bytes (:bytes actual)))
-   (chatty-checker [actual] (.endsWith (.getPath (:file actual)) path-end))))
+   (chatty-checker [actual] (or (nil? group) (= group (:group actual))))
+   (chatty-checker [actual] (or (nil? bytes) (= bytes (:bytes actual))))
+   (chatty-checker [actual] (or (nil? name) (.endsWith (.getPath (:file actual)) name)))))
 
-(defchecker dir-like [bytes filecount]
+(defchecker dir-like
+  [{:keys [group bytes filecount name]}]
   (every-checker
-   (chatty-checker [actual] (= bytes (:bytes actual)))
-   (chatty-checker [actual] (= filecount (:filecount actual)))))
+   (chatty-checker [actual] (or (nil? group) (= group (:group actual))))
+   (chatty-checker [actual] (or (nil? bytes) (= bytes (:bytes actual))))
+   (chatty-checker [actual] (or (nil? filecount) (= filecount (:filecount actual))))
+   (fn [actual] (or (nil? name) (.endsWith (.getPath (:file actual)) name)))))
 
-(defchecker dir-like-with-path [bytes filecount path-end]
-  (every-checker
-   (chatty-checker [actual] (= bytes (:bytes actual)))
-   (chatty-checker [actual] (= filecount (:filecount actual)))
-   (chatty-checker [actual] (.endsWith (.getPath (:file actual)) path-end))))
+(fact "letters gives sequential letters starting with 'a'"
+  (take 5 (letters)) => ["a" "b" "c" "d" "e"])
 
 (fact "duplicates in a tree include all duplicate sets in descending size order"
-  (treeify-and-find-duplicates simple-fixture)
+  (find-dups-quietly {"a" simple-fixture})
   => (just
       (three-of
-       (dir-like 2 2))
+       (dir-like {:bytes 2 :filecount 2}))
       (four-of
-       (file-like 1 "b.txt"))
+       (file-like {:name "b.txt"}))
       (four-of
-       (file-like 1 "a.txt")))
+       (file-like {:name "a.txt"})))
   
-  (treeify-and-find-duplicates complex-fixture)
+  (find-dups-quietly {"a" complex-fixture})
   => (just
       (just
-       (file-like 108 "big_files/my_old_file.txt")
-       (file-like 108 "big_files/my_other_old_file.txt")
+       (file-like {:bytes 108 :name "big_files/my_old_file.txt"})
+       (file-like {:bytes 108 :name "big_files/my_other_old_file.txt"})
        :in-any-order)             
       (two-of
-       (dir-like-with-path 14 3 "123"))
+       (dir-like {:name "123"}))
       (three-of
-       (file-like 6 "three.txt"))
+       (file-like {:name "three.txt"}))
       (three-of
-       (file-like 4 "two.txt"))
+       (file-like {:name  "two.txt"}))
       (three-of
-       (file-like 4 "one.txt"))))
+       (file-like {:name "one.txt"})))
+  )
 
+(fact "multiple directories can be checked"
+  (find-dups-quietly {"a" (file simple-fixture "ab") "b" (file simple-fixture "ab_split")})
+  => (just
+      (just (dir-like {:group "a" :name "ab"})
+            (dir-like {:group "b" :name "ab_split"}))
+      (just
+       (file-like {:group "a" :name "b.txt"})
+       (file-like {:group "b" :name "b.txt"}))
+      (just
+       (file-like {:group "a" :name "a.txt"})
+       (file-like {:group "b" :name "a.txt"}))))

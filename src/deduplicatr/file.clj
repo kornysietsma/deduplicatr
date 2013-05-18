@@ -25,9 +25,16 @@
             (.read filehandle buffer 0 size)
             buffer)))
 
+(defn relative-path [^File basefile ^File file]
+  (let [absbase (str (.getAbsolutePath basefile) "/")
+        absfile (.getAbsolutePath file)]
+    (if (.startsWith absfile absbase)
+      (.substring absfile (.length absbase))
+      (.getPath file))))
+
 (defprotocol Summary
   (file-count [this])
-  (print-summary [this]))
+  (print-summary [this basefile]))
 
 ;; ### FileSummary holds summary info about a file
 ;; * 'bytes' is the size of the file (can't use "size" as it's already
@@ -37,8 +44,8 @@
   Summary
   (file-count [this]
     1)
-  (print-summary [this]
-    (.getPath (.file this))))
+  (print-summary [this basefile]
+    (str (.group this) ": " (relative-path basefile (.file this)))))
 
 ;; ### DirSummary holds summary info about a dir
 ;; * 'bytes' is the cumulative size
@@ -48,9 +55,8 @@
   Summary
   (file-count [this]
     (.filecount this))
-  (print-summary [this]
-     (str (.getPath (.file this)) "/ (" (.filecount this) " files)")))
-
+  (print-summary [this basefile]
+     (str (.group this) ": " (relative-path basefile (.file this)) "/ (" (.filecount this) " files)")))
 
 (defn file-summary
    "Build a FileSummary for a physical file

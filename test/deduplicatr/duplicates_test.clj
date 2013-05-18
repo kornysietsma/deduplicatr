@@ -8,10 +8,12 @@
 (def fixtures (file "test" "fixtures"))
 (def simple-fixture (file fixtures "simple"))
 
-(def simplest-tree {
-   :files [(->FileSummary :group (file "tree" "foo.txt") 10000, 1) ]
+(defn make-simplest-tree [group] {
+   :files [(->FileSummary group (file "tree" "foo.txt") 10000, 1) ]
    :dirs []
-   :summary (->DirSummary :group (file "tree") 20000 1 1)})
+   :summary (->DirSummary group (file "tree") 20000 1 1)})
+
+(def simplest-tree (make-simplest-tree :group))
 
 (def simple-tree
   {:files [(->FileSummary :group (file "tree" "foo.txt") 10000, 1)
@@ -71,16 +73,22 @@
 
 (facts "duplicates returns a list of all duplicate groups in a file system tree, sorted as above, with self-ancestors removed"
   (fact "if there are no duplicates, returns an empty seq" 
-    (duplicates simplest-tree)
+    (duplicates [simplest-tree])
     => [])
   (fact "if there is a single duplicate, return a single result containing all duplicates"
-    (duplicates simple-tree)
+    (duplicates [simple-tree])
     => [[ (->FileSummary :group (file "tree" "child" "foo.txt") 10000 1)
           (->FileSummary :group (file "tree" "foo.txt") 10000, 1)]])
 
+    (fact "checks across multiple trees and groups"
+    (duplicates [simple-tree (make-simplest-tree :2nd)])
+    => [[ (->FileSummary :group (file "tree" "child" "foo.txt") 10000 1)
+          (->FileSummary :group (file "tree" "foo.txt") 10000 1)
+          (->FileSummary :2nd (file "tree" "foo.txt") 10000 1)]])
+
    ; TODO: redundant?  See integration test in core_test.clj
   (fact "if there are more than one duplicate, return them sorted as above"
-    (let [complex-result (duplicates (treeify :group (file simple-fixture)))]
+    (let [complex-result (duplicates [(treeify :group (file simple-fixture))])]
       (count complex-result) 
       => 3
       (map #(:bytes (first %)) complex-result)
