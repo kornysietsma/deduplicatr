@@ -1,10 +1,9 @@
 (ns deduplicatr.hash-test
   (:use midje.sweet
         deduplicatr.hash)
-  (:import (org.apache.commons.codec.binary Hex)
-           (java.security MessageDigest)
-           (java.io File RandomAccessFile)
-           (java.util Random)))
+  (:import [org.apache.commons.codec.binary Hex]
+           [java.security MessageDigest]
+           [java.util Random]))
 
 (fact "you can digest longs" ; ok, not a great test, but it'll do for now
   (digest-as-hex (digest-of-long 1234))

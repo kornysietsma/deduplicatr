@@ -2,10 +2,13 @@
 
 (ns deduplicatr.file
   (:use deduplicatr.hash)
-  (:import (java.security MessageDigest)
-           (java.nio ByteBuffer)
-           (java.io File RandomAccessFile)
-           (org.apache.commons.codec.binary Hex)))
+  (:require [fu.core :as fu])
+  (:import [java.security MessageDigest]
+           [java.nio ByteBuffer]
+           [java.nio.file Path]
+           [java.nio.channels FileChannel]
+           [java.io File RandomAccessFile]
+           [org.apache.commons.codec.binary Hex]))
 
 (def ^:dynamic hash-chunk-size
   "File hashes for large files are based on reading this many bytes from the start, middle, and end of the file
@@ -14,6 +17,11 @@
   1024)
 
 (defn chunk-of-file
+  (^bytes [^FileChannel channel offset] (chunk-of-file channel hash-chunk-size offset))
+  (^bytes [^FileChannel channel size offset]
+          (fu/read-bytes channel offset size)))
+
+(defn old-chunk-of-file
    "read part of a binary file as a byte array
 
    note - no error handling, assumes there are [size] bytes available at [offset]"
@@ -25,7 +33,13 @@
             (.read filehandle buffer 0 size)
             buffer)))
 
-(defn relative-path [^File basefile ^File file]
+(defn relative-path [^Path basepath ^Path path]
+  (if (.startsWith path basepath)
+    (.toString (.relativize basepath path))
+    (.toString path)))
+; TODO: can we get rid of .toString?
+
+#_(defn relative-path [^File basefile ^File file]
   (let [absbase (str (.getAbsolutePath basefile) "/")
         absfile (.getAbsolutePath file)]
     (if (.startsWith absfile absbase)
@@ -40,7 +54,7 @@
 ;; * 'bytes' is the size of the file (can't use "size" as it's already
 ;; defined for records)
 (defrecord FileSummary
-    [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes]
+    [^clojure.lang.Keyword group ^Path file ^clojure.lang.BigInt hash ^long bytes]
   Summary
   (file-count [this]
     1)
@@ -51,7 +65,7 @@
 ;; * 'bytes' is the cumulative size
 ;; * filecount is the total number of files contained
 (defrecord DirSummary
-    [^clojure.lang.Keyword group ^File file ^clojure.lang.BigInt hash ^long bytes ^long filecount]
+    [^clojure.lang.Keyword group ^Path file ^clojure.lang.BigInt hash ^long bytes ^long filecount]
   Summary
   (file-count [this]
     (.filecount this))
@@ -63,12 +77,12 @@
 
 * for small files, hash is the md5sum of the file size + the binary file contents
 * for larger files, hash is the md5sum of the file size + the start of the file + the middle of the file + the end of the file"
-   [group ^File file]
+   [group ^Path file]
    (let [md (MessageDigest/getInstance "MD5")
-         size (.length file)
+         size (fu/size file)
          ]
      (add-long-to-digest! size md)
-     (with-open [raf (RandomAccessFile. file "r")]
+     (with-open [raf (fu/ro-file-channel file)] ; TODO rename this and other symbols
        (if (> size (* hash-chunk-size 3))
          (do
            (.update md (chunk-of-file raf 0))
@@ -81,7 +95,7 @@
 
 (defn empty-dir-summary
   "Starting FileSummary for a directory with no files"
-  [group ^File file]
+  [group ^Path file]
   (->DirSummary group file 0N 0 0))
 
 (defn dir-summary

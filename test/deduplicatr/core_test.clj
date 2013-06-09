@@ -4,11 +4,12 @@
    [deduplicatr.core :refer :all]
    [deduplicatr.duplicates :refer [duplicates]]
    [deduplicatr.fstree :refer [treeify]]
+   [fu.core :as fu]
    [clojure.java.io :refer [file]]))
 
-(def fixtures (file "test" "fixtures"))
-(def simple-fixture (file fixtures "simple"))
-(def complex-fixture (file fixtures "complex"))
+(def fixtures (fu/path "test" "fixtures"))
+(def simple-fixture (fu/path "test" "fixtures" "simple"))
+(def complex-fixture (fu/path "test" "fixtures" "complex"))
 
 (defmacro with-out-ignored
   [& body]
@@ -25,14 +26,14 @@
 
 (defchecker with-path-ending [expected]
   (chatty-checker [actual]
-                  (.endsWith (.getPath actual) expected)))
+                  (.endsWith (fu/get-path actual) expected)))
 
 (defchecker file-like
   [{:keys [group bytes name]}]
   (every-checker
    (chatty-checker [actual] (or (nil? group) (= group (:group actual))))
    (chatty-checker [actual] (or (nil? bytes) (= bytes (:bytes actual))))
-   (chatty-checker [actual] (or (nil? name) (.endsWith (.getPath (:file actual)) name)))))
+   (chatty-checker [actual] (or (nil? name) (.endsWith (fu/get-path (:file actual)) name)))))
 
 (defchecker dir-like
   [{:keys [group bytes filecount name]}]
@@ -40,7 +41,7 @@
    (chatty-checker [actual] (or (nil? group) (= group (:group actual))))
    (chatty-checker [actual] (or (nil? bytes) (= bytes (:bytes actual))))
    (chatty-checker [actual] (or (nil? filecount) (= filecount (:filecount actual))))
-   (fn [actual] (or (nil? name) (.endsWith (.getPath (:file actual)) name)))))
+   (fn [actual] (or (nil? name) (.endsWith (fu/get-path (:file actual)) name)))))
 
 (fact "letters gives sequential letters starting with 'a'"
   (take 5 (letters)) => ["a" "b" "c" "d" "e"])
@@ -72,7 +73,7 @@
   )
 
 (fact "multiple directories can be checked"
-  (find-dups-quietly {"a" (file simple-fixture "ab") "b" (file simple-fixture "ab_split")})
+  (find-dups-quietly {"a" (fu/rel-path simple-fixture "ab") "b" (fu/rel-path simple-fixture "ab_split")})
   => (just
       (just (dir-like {:group "a" :name "ab"})
             (dir-like {:group "b" :name "ab_split"}))

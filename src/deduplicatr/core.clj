@@ -1,6 +1,7 @@
 (ns deduplicatr.core
   "a command-line application for finding duplicates in a file system"
   (:require [clojure.java.io :refer [file]]
+            [fu.core :as fu]
             [clojure.tools.cli :refer [cli]]
             [deduplicatr.duplicates :refer [duplicates]]
             [deduplicatr.fstree :refer [treeify]]
@@ -19,13 +20,13 @@
   [named-roots]
   (for [[group root] named-roots]
     (do 
-      (println "reading files from: (" group ") " root)
+      (println "reading files from: (" group ") " (fu/get-path root))
       (treeify group root))))
 
 (defn find-dups
   [named-roots]
   (let [trees (treeify-named named-roots)
-        _ (println "looking for duplicates..." trees)
+        _ (println "looking for duplicates...")
         dups (duplicates trees)
         _ (println "dups found")]
     dups))
@@ -47,7 +48,7 @@
   (let [[options args banner]
         (cli args
              ["-h" "--help" "Show help" :default false :flag true])
-        roots (map file args)]
+        roots (map fu/path args)]
     ; warning: procedural code follows!
     (when (:help options)
       (println banner "\n followed by a directory to scan")
@@ -56,7 +57,7 @@
       (println "You must specify at least one directory to scan")
       (System/exit 1))
     (doseq [root roots]
-      (when (not (.isDirectory root))
+      (when (not (fu/is-real-dir root))
         (println (.getPath root) " is not a valid directory")
         (System/exit 1)))
     (show-duplicates roots)

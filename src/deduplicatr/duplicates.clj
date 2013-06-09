@@ -1,8 +1,9 @@
 ;; ## Logic to find duplicate sets in a tree of directory and file information.
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:import (deduplicatr.file FileSummary)
-           (java.io File)))
+  (:require [fu.core :as fu])
+  (:import [deduplicatr.file FileSummary]
+           [java.nio.file Path]))
 
 (defn- summary-of-dir-or-filesummary
   "returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)"
@@ -23,11 +24,16 @@
 (defn size-and-hash-sort-key
   "sort key for sorting Summaries by (decreasing) size, then by hash"
   [summary]
-  [(- (:bytes summary)) (:hash summary) (.getPath (:file summary))])
+  [(- (:bytes summary)) (:hash summary) (fu/get-path (:file summary))])
 
 (defn is-ancestor-of
+  [^Path file1 ^Path file2]
+  (and (.startsWith file2 file1)
+       (not (= file2 file1))))
+
+#_(defn is-ancestor-of
   "checks if a file is another file's ancestor - assumes they share a common root directory"
-  [^File file1 ^File file2]
+  [^Path file1 ^Path file2]
   (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
 
 (defn is-summary-ancestor-of

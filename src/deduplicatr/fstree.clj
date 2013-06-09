@@ -2,8 +2,10 @@
 ;; some of this is best documented through the tests - see the test directory in the source.
 (ns deduplicatr.fstree
   (:use deduplicatr.hash
-        [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]])
-  (:import (java.io File RandomAccessFile)))
+        [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]]
+        [fu.core :as fu])
+  (:import [java.io File RandomAccessFile]
+           [java.nio.file Path]))
 
 (defn treeify
   "traverses a directory, building a tree of contents as a map
@@ -13,11 +15,11 @@
 *     :dirs -> a seq of each child dir's tree structure
 *     :summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants"
 
-  [group ^File dir]
+  [group ^Path dir]
     (let [initial-dir-summary (empty-dir-summary group dir)  ; 1-arg call gives an initial summary
-          children (.listFiles dir)
-          child-files (filter (fn [^File f] (.isFile f)) children)
-          child-dirs (filter (fn [^File f] (.isDirectory f)) children)
+          children (fu/children dir)
+          child-files (filter fu/is-real-file children)
+          child-dirs (filter fu/is-real-dir children)
           child-file-summaries (map (partial file-summary group) child-files)
           child-dir-trees (map (partial treeify group) child-dirs)
           all-child-summaries (concat child-file-summaries (map :summary child-dir-trees))
