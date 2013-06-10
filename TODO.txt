@@ -1,7 +1,4 @@
 TODO:
-- ignore symlinks - either needs java 7, or JNI, or slow ugly hacks!
--- or could post-process and remove symlinks from duplicates not from trees
--- at minimum, suggest ways to combine with "find -type l" (for which we need to be able to ignore a list of paths!) - this is the simplest option
 - sort by number of files instead of just size
 - add logging, especially progress on slow jobs, file counts
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
@@ -18,3 +15,4 @@ longer term:
 Done:
 - handle multiple sources
 - filter file prefixes in output (especially now we have group names) 
+- ignores symlinks!

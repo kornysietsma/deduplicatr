@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8" content="text/html" http-equiv="Content-Type" /><meta content="A command-line application for finding duplicates in a file system" name="description" /><style type="text/css">/**
+<html><head><meta charset="utf-8" content="text/html" http-equiv="Content-Type" /><meta content="A command-line application for finding duplicate files and directories" name="description" /><style type="text/css">/**
  * SyntaxHighlighter
  * http://alexgorbatchev.com/SyntaxHighlighter
  *
@@ -3028,53 +3028,66 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>deduplicatr -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">deduplicatr</h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>A command-line application for finding duplicates in a file system</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">commons-codec/commons-codec</td><td class="dotted"><hr /></td><td class="dep-version">1.4</td></tr><tr><td class="dep-name">bultitude</td><td class="dotted"><hr /></td><td class="dep-version">0.1.7</td></tr><tr><td class="dep-name">org.clojure/tools.cli</td><td class="dotted"><hr /></td><td class="dep-version">0.2.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#deduplicatr.core">deduplicatr.core</a></li><li><a href="#deduplicatr.duplicates">deduplicatr.duplicates</a></li><li><a href="#deduplicatr.file">deduplicatr.file</a></li><li><a href="#deduplicatr.fstree">deduplicatr.fstree</a></li><li><a href="#deduplicatr.hash">deduplicatr.hash</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.core" name="deduplicatr.core"><h1 class="project-name">deduplicatr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>a command-line application for finding duplicates in a file system</h2>
+</script><title>deduplicatr -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">deduplicatr</h1><h2 class="project-version">0.2.0-SNAPSHOT</h2><br /><p>A command-line application for finding duplicate files and directories</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.5.1</td></tr><tr><td class="dep-name">commons-codec/commons-codec</td><td class="dotted"><hr /></td><td class="dep-version">1.4</td></tr><tr><td class="dep-name">org.clojure/tools.cli</td><td class="dotted"><hr /></td><td class="dep-version">0.2.2</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#deduplicatr.core">deduplicatr.core</a></li><li><a href="#deduplicatr.duplicates">deduplicatr.duplicates</a></li><li><a href="#deduplicatr.file">deduplicatr.file</a></li><li><a href="#deduplicatr.fstree">deduplicatr.fstree</a></li><li><a href="#deduplicatr.hash">deduplicatr.hash</a></li><li><a href="#fileutils.fu">fileutils.fu</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.core" name="deduplicatr.core"><h1 class="project-name">deduplicatr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><p>a command-line application for finding duplicates in a file system</p>
+</td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.core
+  (:require [fileutils.fu :as fu]
+            [clojure.tools.cli :refer [cli]]
+            [deduplicatr.duplicates :refer [duplicates]]
+            [deduplicatr.fstree :refer [treeify]]
+            [deduplicatr.file :refer [print-summary]])
+  (:gen-class :main true))</pre></td></tr><tr><td class="docs"><h2>a command-line application for finding duplicates in a file system</h2>
 
 <p>see https://github.com/kornysietsma/deduplicatr for code and other docs</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Note that some of this is best documented through the tests - see the test directory in the source for more.</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.core
-  (:use [clojure.tools.cli :only [cli]]
-        [clojure.java.io :only [file]]
-        [deduplicatr.duplicates :only [duplicates]]
-        [deduplicatr.fstree :only [treeify]])
-  (:import (deduplicatr.file FileSummary))
-  (:gen-class :main true))</pre></td></tr><tr><td class="docs"><p>print names of duplicate file sets to standard output</p>
-</td><td class="codes"><pre class="brush: clojure">(defn show-duplicates
-  [root]
-  (let [tree (treeify root)
-        _ (println &quot;tree parsed&quot;)
-        dups (duplicates tree)
+</td><td class="codes"><pre class="brush: clojure">(defn letters []
+  (map (comp str char) (iterate inc (int \a))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn treeify-named
+  [named-roots]
+  (for [[group root] named-roots]
+    (do 
+      (println &quot;reading files from: (&quot; group &quot;) &quot; (fu/get-path root))
+      (treeify group root))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn find-dups
+  [named-roots]
+  (let [trees (treeify-named named-roots)
+        _ (println &quot;looking for duplicates...&quot;)
+        dups (duplicates trees)
         _ (println &quot;dups found&quot;)]
+    dups))</pre></td></tr><tr><td class="docs"><p>print names of duplicate file sets to standard output</p>
+</td><td class="codes"><pre class="brush: clojure">(defn show-duplicates
+  [roots]
+  (let [named-roots (into {} (map vector (letters) roots))
+        dups (find-dups named-roots)]
   (doseq [identical-files dups]
     (println (count identical-files) &quot; matches of size &quot; (.bytes (first identical-files)))
     (doseq [summary identical-files]
-      (if (.is-dir summary)
-        (println &quot;   &quot; (str (.getPath (.file summary)) &quot;/ (&quot; (.filecount summary) &quot; files)&quot;))
-        (println &quot;   &quot; (.getPath (.file summary))))))))</pre></td></tr><tr><td class="docs"><p>The main entry point - collects command-line arguments and calls show-duplicates.</p>
-
-<p>  Currently only supports a single directory, plus basic help.</p>
+      (let [base (named-roots (.group summary))]
+        (println &quot;  &quot; (print-summary summary base)))))))</pre></td></tr><tr><td class="docs"><p>The main entry point - collects command-line arguments and calls show-duplicates.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn -main
   [&amp; args]
   (let [[options args banner]
         (cli args
              [&quot;-h&quot; &quot;--help&quot; &quot;Show help&quot; :default false :flag true])
-        root (file (first args))]
+        roots (map fu/path args)]
+    ; warning: procedural code follows!
     (when (:help options)
       (println banner &quot;\n followed by a directory to scan&quot;)
       (System/exit 0))
-    (when (not (= 1 (count args)))
-      (println &quot;You must specify a directory to scan (and only one!)&quot;)
+    (when-not (&gt; (count roots) 0)
+      (println &quot;You must specify at least one directory to scan&quot;)
       (System/exit 1))
-    (when (not (.isDirectory root))
-      (println (first args) &quot; is not a valid directory&quot;)
-      (System/exit 1))
-    (show-duplicates root)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.duplicates" name="deduplicatr.duplicates"><h1 class="project-name">deduplicatr.duplicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Logic to find duplicate sets in a tree of directory and file information.</h2>
+    (doseq [root roots]
+      (when (not (fu/is-real-dir root))
+        (println (.getPath root) &quot; is not a valid directory&quot;)
+        (System/exit 1)))
+    (show-duplicates roots)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.duplicates" name="deduplicatr.duplicates"><h1 class="project-name">deduplicatr.duplicates</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Logic to find duplicate sets in a tree of directory and file information.</h2>
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:import (deduplicatr.file FileSummary)
-           (java.io File)))</pre></td></tr><tr><td class="docs"><p>returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)</p>
+  (:require [fileutils.fu :as fu])
+  (:import [deduplicatr.file FileSummary]
+           [java.nio.file Path]))</pre></td></tr><tr><td class="docs"><p>returns appropriate FileSummary for a node being traversed - the summary entry from a map (for a directory) or the node itself (for a file)</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- summary-of-dir-or-filesummary
   [file-or-dir]
   (if (contains? file-or-dir :summary)
@@ -3086,16 +3099,23 @@ net.brehaut.ClojureTools = (function (SH) {
        (tree-seq 
          #(contains? % :files)
          #(concat (:dirs %) (:files %)) 
-         root)))</pre></td></tr><tr><td class="docs"><p>sort key for sorting FileSummaries by (decreasing) size, then by hash</p>
+         root)))</pre></td></tr><tr><td class="docs"><p>sort key for sorting Summaries by (decreasing) size, then by hash</p>
 </td><td class="codes"><pre class="brush: clojure">(defn size-and-hash-sort-key
-  [^FileSummary summary]
-  [(- (.bytes summary)) (.hash summary) (.getPath (.file summary))])</pre></td></tr><tr><td class="docs"><p>checks if a file is another file's ancestor - assumes they share a common root directory</p>
+  [summary]
+  [(- (:bytes summary)) (:hash summary) (fu/get-path (:file summary))])</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn is-ancestor-of
-  [^File file1 ^File file2]
-  (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))</pre></td></tr><tr><td class="docs"><p>checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- is-summary-ancestor-of
-  [^FileSummary summary1 ^FileSummary summary2]
-  (is-ancestor-of (.file summary1) (.file summary2)))</pre></td></tr><tr><td class="docs"><p>check if a FileSummary is the ancestor of any of a list of other FileSummaries</p>
+  [^Path file1 ^Path file2]
+  (and (.startsWith file2 file1)
+       (not (= file2 file1))))</pre></td></tr><tr><td class="docs"><p>checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory</p>
+</td><td class="codes"><pre class="brush: clojure">#_(defn is-ancestor-of
+  &quot;checks if a file is another file's ancestor - assumes they share a common root directory&quot;
+  [^Path file1 ^Path file2]
+  (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
+(defn is-summary-ancestor-of
+  [summary1 summary2]
+  (and
+   (= (:group summary1) (:group summary2))
+   (is-ancestor-of (:file summary1) (:file summary2))))</pre></td></tr><tr><td class="docs"><p>check if a summary is the ancestor of any of a list of other FileSummaries</p>
 </td><td class="codes"><pre class="brush: clojure">(defn- is-ancestor-of-any
   [summary summaries]
   (if (isa? FileSummary summary)
@@ -3107,16 +3127,14 @@ net.brehaut.ClojureTools = (function (SH) {
     ; TODO: does subvec work better than nthrest?
     ; TODO: consider removing sort prerequisite - feels ugly, only small speed improvement
     (fn [index item] (if (is-ancestor-of-any item (nthrest summaries (inc index))) nil item))
-    summaries))</pre></td></tr><tr><td class="docs"><p>finds duplicate directory/file sets in a fstree</p>
-
-<ul>
-<li>returns a seq of seqs of identical files/directories</li>
-<li>results are sorted so the largest sets are first</li>
-</ul>
+    summaries))</pre></td></tr><tr><td class="docs"><p>finds duplicate directory/file sets in seq of fstrees
+   * returns a seq of seqs of identical files/directories
+   * results are sorted so the largest sets are first
+   * assumes fstrees know about groups already</p>
 </td><td class="codes"><pre class="brush: clojure">(defn duplicates
-  [tree]
-  (-&gt;&gt; tree
-       (fstree-seq) ; convert to seq
+  [trees]
+  (-&gt;&gt; trees
+       (#(flatten (map fstree-seq %)))
        (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
        (partition-by :hash) ; partition into subseqs by hash
        (filter next) ; remove any with a single subseq (i.e. not a duplicate)
@@ -3125,79 +3143,86 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.file
   (:use deduplicatr.hash)
-  (:import (java.security MessageDigest)
-           (java.nio ByteBuffer)
-           (java.io File RandomAccessFile)
-           (org.apache.commons.codec.binary Hex)))</pre></td></tr><tr><td class="docs"><p>File hashes for large files are based on reading this many bytes from the start, middle, and end of the file
+  (:require [fileutils.fu :as fu])
+  (:import [java.security MessageDigest]
+           [java.nio ByteBuffer]
+           [java.nio.file Path]
+           [java.nio.channels FileChannel]
+           [org.apache.commons.codec.binary Hex]))</pre></td></tr><tr><td class="docs"><p>File hashes for large files are based on reading this many bytes from the start, middle, and end of the file
    (this is dynamic primarily for testing)</p>
 </td><td class="codes"><pre class="brush: clojure">(def ^:dynamic hash-chunk-size
   ; TODO: consider making this not dynamic again... what is the speed impact here?
-  1024)</pre></td></tr><tr><td class="docs"><p>read part of a binary file as a byte array</p>
-
-<p>   note - no error handling, assumes there are [size] bytes available at [offset]</p>
+  1024)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn chunk-of-file
-   (^bytes [^RandomAccessFile filehandle offset] (chunk-of-file filehandle hash-chunk-size offset))
-   (^bytes [^RandomAccessFile filehandle size offset]
-     (let [buffer (byte-array size)]
-            ; bizarrely, the 'offset' in .read is the _destination_ offset! so need to seek:
-            (.seek filehandle offset)
-            (.read filehandle buffer 0 size)
-            buffer)))</pre></td></tr><tr><td class="docs"><h3>FileSummary holds summary info about a file or a directory</h3>
+  (^bytes [^FileChannel channel offset] (chunk-of-file channel hash-chunk-size offset))
+  (^bytes [^FileChannel channel size offset]
+          (fu/read-bytes channel offset size)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defprotocol Summary
+  (file-count [this])
+  (print-summary [this basefile]))</pre></td></tr><tr><td class="docs"><h3>FileSummary holds summary info about a file</h3>
 
 <ul>
-<li>'bytes' is the size of the file (can't use "size" as it's already defined for records)</li>
-<li>'is-dir' is true for a directory, false for a file</li>
-<li>filecount is the number of files contained, 1 for a file (and generally ignored)</li>
+<li>'bytes' is the size of the file (can't use "size" as it's already
+defined for records)</li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defrecord FileSummary
-  [^File file ^BigInteger hash ^long bytes ^boolean is-dir ^long filecount])</pre></td></tr><tr><td class="docs"><p>construct a FileSummary record manually for a file</p>
-</td><td class="codes"><pre class="brush: clojure">(defn make-file-summary
-  [^File file ^BigInteger hash ^long bytes]
-  (FileSummary. file hash bytes false 1))</pre></td></tr><tr><td class="docs"><p>construct a FileSummary record manually for a directory</p>
-</td><td class="codes"><pre class="brush: clojure">(defn make-dir-summary
-  [^File file ^BigInteger hash ^long bytes ^long filecount]
-    (FileSummary. file hash bytes true filecount))</pre></td></tr><tr><td class="docs"><p>Build a FileSummary for a physical file</p>
+    [^clojure.lang.Keyword group ^Path file ^clojure.lang.BigInt hash ^long bytes]
+  Summary
+  (file-count [this]
+    1)
+  (print-summary [this basefile]
+    (str (.group this) &quot;: &quot; (fu/relative-to basefile (.file this)))))</pre></td></tr><tr><td class="docs"><h3>DirSummary holds summary info about a dir</h3>
+
+<ul>
+<li>'bytes' is the cumulative size</li>
+<li>filecount is the total number of files contained</li>
+</ul>
+</td><td class="codes"><pre class="brush: clojure">(defrecord DirSummary
+    [^clojure.lang.Keyword group ^Path file ^clojure.lang.BigInt hash ^long bytes ^long filecount]
+  Summary
+  (file-count [this]
+    (.filecount this))
+  (print-summary [this basefile]
+     (str (.group this) &quot;: &quot; (fu/relative-to basefile (.file this)) &quot;/ (&quot; (.filecount this) &quot; files)&quot;)))</pre></td></tr><tr><td class="docs"><p>Build a FileSummary for a physical file</p>
 
 <ul>
 <li>for small files, hash is the md5sum of the file size + the binary file contents</li>
 <li>for larger files, hash is the md5sum of the file size + the start of the file + the middle of the file + the end of the file</li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defn file-summary
-   [^File file]
+   [group ^Path file]
    (let [md (MessageDigest/getInstance &quot;MD5&quot;)
-         size (.length file)
+         size (fu/size file)
          ]
      (add-long-to-digest! size md)
-     (with-open [raf (RandomAccessFile. file &quot;r&quot;)]
+     (with-open [raf (fu/ro-file-channel file)] ; TODO rename this and other symbols
        (if (&gt; size (* hash-chunk-size 3))
          (do
            (.update md (chunk-of-file raf 0))
            (.update md (chunk-of-file raf  (- (/ size 2) (/ hash-chunk-size 2))))
            (.update md (chunk-of-file raf (- size hash-chunk-size))))
          (.update md (chunk-of-file raf size 0)))
-       (make-file-summary file (digest-as-bigint md) size))))</pre></td></tr><tr><td class="docs"><p>build a FileSummary for a physical directory</p>
+       (-&gt;FileSummary group file (digest-as-bigint md) size))))</pre></td></tr><tr><td class="docs"><p>Starting FileSummary for a directory with no files</p>
+</td><td class="codes"><pre class="brush: clojure">(defn empty-dir-summary
+  [group ^Path file]
+  (-&gt;DirSummary group file 0N 0 0))</pre></td></tr><tr><td class="docs"><p>build a DirSummary for a physical directory by adding all child FileSummaries to an existing summary</p>
 
-<p>   the single-argument version builds a summary for an empty directory</p>
-
-<p>   the multi-argument version builds a summary by adding all child FileSummaries to an existing summary</p>
-
-<p>   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigIntegers so this works</p>
+<p>   the directory hash is simply the sum of individual child hashes - we store hashes as positive BigInts so this works</p>
 </td><td class="codes"><pre class="brush: clojure">(defn dir-summary
-  ([^File file]
-    (make-dir-summary file (BigInteger/ZERO) 0 0))
-  ([^FileSummary prevsummary &amp; summaries]  ; TODO: can we type hint the summaries? probably doesn't matter as we use :keyword
-    (make-dir-summary
+  [^DirSummary prevsummary &amp; summaries] 
+    (-&gt;DirSummary
+      (.group prevsummary)
       (.file prevsummary)
-      (apply add-bigints (.hash prevsummary) (map :hash summaries))
+      (apply + (.hash prevsummary) (map :hash summaries))
       (apply + (.bytes prevsummary) (map :bytes summaries))
-      (apply + (.filecount prevsummary) (map :filecount summaries)))))</pre></td></tr><tr><td class="docs"><p>TODO: improve the above using 'into'?</p>
-</td><td class="codes"></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.fstree" name="deduplicatr.fstree"><h1 class="project-name">deduplicatr.fstree</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Functions to build and manipulate "fstree"s - trees of file system information and summaries.</h2>
+      (apply + (.filecount prevsummary) (map file-count summaries))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.fstree" name="deduplicatr.fstree"><h1 class="project-name">deduplicatr.fstree</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Functions to build and manipulate "fstree"s - trees of file system information and summaries.</h2>
 
 <p>some of this is best documented through the tests - see the test directory in the source.</p>
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.fstree
   (:use deduplicatr.hash
-        [deduplicatr.file :only [file-summary dir-summary]])
-  (:import (java.io File RandomAccessFile)))</pre></td></tr><tr><td class="docs"><p>traverses a directory, building a tree of contents as a map
+        [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]]
+        [fileutils.fu :as fu])
+  (:import [java.nio.file Path]))</pre></td></tr><tr><td class="docs"><p>traverses a directory, building a tree of contents as a map
     where each node is a hash of :</p>
 
 <ul>
@@ -3206,28 +3231,27 @@ net.brehaut.ClojureTools = (function (SH) {
 <li>:summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants</li>
 </ul>
 </td><td class="codes"><pre class="brush: clojure">(defn treeify
-  [^File dir]
-    (let [current-dir-summary (dir-summary dir)  ; 1-arg call gives an initial summary
-          children (.listFiles dir)
-          child-files (filter (fn [^File f] (.isFile f)) children)
-          child-dirs (filter (fn [^File f] (.isDirectory f)) children)
-          child-file-summaries (map file-summary child-files)
-          child-dir-trees (map treeify child-dirs)
+  [group ^Path dir]
+    (let [initial-dir-summary (empty-dir-summary group dir)  ; 1-arg call gives an initial summary
+          children (fu/children dir)
+          child-files (filter fu/is-real-file children)
+          child-dirs (filter fu/is-real-dir children)
+          child-file-summaries (map (partial file-summary group) child-files)
+          child-dir-trees (map (partial treeify group) child-dirs)
           all-child-summaries (concat child-file-summaries (map :summary child-dir-trees))
           my-summary (if (seq all-child-summaries) ; if we have any children at all
-                         (apply dir-summary current-dir-summary all-child-summaries)
-                         current-dir-summary)
+                         (apply dir-summary initial-dir-summary all-child-summaries)
+                         initial-dir-summary)
          ]
       {:files child-file-summaries
         :dirs child-dir-trees
         :summary my-summary }))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#deduplicatr.hash" name="deduplicatr.hash"><h1 class="project-name">deduplicatr.hash</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>utility functions for manipulating Java md5 digests</h2>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns deduplicatr.hash
-  (:import (java.security MessageDigest)
-            (java.nio ByteBuffer)
-            (java.io File RandomAccessFile)
-            (java.math BigInteger)
-            (org.apache.commons.codec.binary Hex)))</pre></td></tr><tr><td class="docs"><p>add a long to a digest - mostly for testing</p>
+  (:import [java.security MessageDigest]
+           [java.nio ByteBuffer]
+           [java.math BigInteger]
+           [org.apache.commons.codec.binary Hex]))</pre></td></tr><tr><td class="docs"><p>add a long to a digest - mostly for testing</p>
 </td><td class="codes"><pre class="brush: clojure"> (defn add-long-to-digest!
    [^Long l ^MessageDigest message-digest]
    (let [buffer (byte-array 8)
@@ -3238,13 +3262,83 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn digest-of-long
   [l]
     (add-long-to-digest! l (MessageDigest/getInstance &quot;MD5&quot;)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn digest-as-hex [^MessageDigest digest] (Hex/encodeHexString (.digest digest)))</pre></td></tr><tr><td class="docs"><p>converts a digest to a <em>positive</em> BigInteger</p>
+</td><td class="codes"><pre class="brush: clojure">(defn digest-as-hex [^MessageDigest digest] (Hex/encodeHexString (.digest digest)))</pre></td></tr><tr><td class="docs"><p>converts a digest to a <em>positive</em> BigInt</p>
 
-<p>   positive BigIntegers are useful as they can be added for a commutative hash-of-hashes.  See tests for more.</p>
+<p>   positive BigInts are useful as they can be added for a commutative hash-of-hashes.  See tests for more.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn digest-as-bigint
   [^MessageDigest digest]
-  (BigInteger. 1 (.digest digest)))</pre></td></tr><tr><td class="docs"><p>add any number of BigInteger values</p>
-</td><td class="codes"><pre class="brush: clojure">(defn add-bigints
-  ([^BigInteger a ^BigInteger b] (.add a b))
-  ([^BigInteger a ^BigInteger b &amp; more] (reduce add-bigints (.add a b) more)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (bigint (BigInteger. 1 (.digest digest))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#fileutils.fu" name="fileutils.fu"><h1 class="project-name">fileutils.fu</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns fileutils.fu
+  (:import [java.nio ByteBuffer]
+           [java.nio.file Path Paths Files OpenOption StandardOpenOption LinkOption]
+           [java.nio.channels SeekableByteChannel FileChannel]
+           [java.nio.file.attribute FileAttribute]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn java-version []
+  (let [[maj min sub] (clojure.string/split (System/getProperty &quot;java.version&quot;) #&quot;\.&quot;)]
+    {:major (Integer/parseInt maj) :minor (Integer/parseInt min) :sub sub}))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn at-least-java-7 []
+  (let [{:keys [major minor]} (java-version)]
+    (and (= major 1) (&gt;= minor 7))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn path
+  ^Path [first &amp; paths]
+  (Paths/get first (into-array String paths)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn rel-path
+  ^Path [^Path first &amp; paths]
+  (.resolve first (apply path paths)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn ^Path relative-to [^Path basepath ^Path path]
+  (.relativize basepath path))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn size
+  [^Path path]
+  (Files/size path))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- to-standard-open-option [keyword]
+  (case keyword
+    :append StandardOpenOption/APPEND
+    :create StandardOpenOption/CREATE
+    :create_new StandardOpenOption/CREATE_NEW
+    :delete_on_close StandardOpenOption/DELETE_ON_CLOSE
+    :dsync StandardOpenOption/DSYNC
+    :read StandardOpenOption/READ
+    :sparse StandardOpenOption/SPARSE
+    :sync StandardOpenOption/SYNC
+    :truncate_existing StandardOpenOption/TRUNCATE_EXISTING
+    :write StandardOpenOption/WRITE
+    (throw (Exception. (str &quot;no such option:&quot; keyword)))))</pre></td></tr><tr><td class="docs"><p>converts keyword-style option options such as :read :append :sparse etc. to array of OpenOption</p>
+</td><td class="codes"><pre class="brush: clojure">(defn open-option-array
+  [&amp; options]
+  (into-array OpenOption (map to-standard-open-option options)))</pre></td></tr><tr><td class="docs"><p>converts keyword-style open options such as :read :append etc into a set</p>
+</td><td class="codes"><pre class="brush: clojure">(defn open-option-set
+  [&amp; options]
+  (into #{} (map to-standard-open-option options)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def empty-file-attributes
+  (into-array FileAttribute []))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn ro-file-channel
+  ^FileChannel [^Path path]
+  (Files/newByteChannel path (open-option-set :read) empty-file-attributes))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn read-bytes ^bytes [^FileChannel channel offset bytes]
+  (let [buf (ByteBuffer/allocate bytes)
+        bytes-read (.read channel buf offset)]
+    (if (= bytes-read bytes)
+      (.array buf)
+      (throw (Exception. (str &quot;failed to read &quot; bytes &quot; returned value:&quot; bytes-read))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn file-name [^Path path]
+  (-&gt; path .getFileName .toString))</pre></td></tr><tr><td class="docs"><p>equivalent of File/getPath - rename this once refactor done</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-path
+  [^Path path]
+  (-&gt; path .toString))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn children [^Path path]
+  (with-open [ds (Files/newDirectoryStream path)]
+    (doall (seq ds))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def no-links (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn is-real-file [^Path path]
+  (Files/isRegularFile path no-links))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn is-real-dir [^Path path]
+  (Files/isDirectory path no-links))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn is-symlink [^Path path]
+  (Files/isSymbolicLink path))</pre></td></tr><tr><td class="docs"><p>create a temp file with specific byte data - mostly for tests</p>
+</td><td class="codes"><pre class="brush: clojure">(defn temp-file-with-data
+  [bytes]
+  (let [f (Files/createTempFile &quot;fu&quot; &quot;.test&quot; (into-array FileAttribute []))
+            data (byte-array (map byte bytes))
+        _ (Files/write f data (open-option-array :create))]
+    f))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>

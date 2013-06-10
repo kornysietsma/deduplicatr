@@ -4,9 +4,11 @@ A Clojure application designed to find duplicates in a large set of files
 
 This is a work in progress - it is currently working, but very much in a beta state.
 
+Note that as of the latest update, you need Java 7 to build and run this, as it uses new language features - most significantly, the ability to ignore symlinks!
+
 ## Usage
 
-Currently this needs leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, for running without clojure/leiningen.
+Currently this needs Java 7, and leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, for running without clojure/leiningen.
 
 Usage at this stage is simple:
 
@@ -16,7 +18,6 @@ This will scan all files in the directory, then print out all duplicate director
 
 ## Documentation
 Introductory documentation is in [the wiki on github](https://github.com/kornysietsma/deduplicatr/wiki).
-There is also some code annotated with marginalia [here](http://cloud.github.com/downloads/kornysietsma/deduplicatr/uberdoc.html)
 Finally the [tests](https://github.com/kornysietsma/deduplicatr/tree/master/test/deduplicatr) are also a great way to understand what is going on - this project is mostly test-driven.
 
 ## Thanks
