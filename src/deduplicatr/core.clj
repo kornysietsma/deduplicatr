@@ -1,7 +1,6 @@
 (ns deduplicatr.core
   "a command-line application for finding duplicates in a file system"
-  (:require [clojure.java.io :refer [file]]
-            [fu.core :as fu]
+  (:require [fileutils.fu :as fu]
             [clojure.tools.cli :refer [cli]]
             [deduplicatr.duplicates :refer [duplicates]]
             [deduplicatr.fstree :refer [treeify]]

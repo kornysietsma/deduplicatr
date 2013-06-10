@@ -1,40 +1,22 @@
-(ns deduplicatr.file-test
+(ns deduplicatr.t-file
   (:use midje.sweet
-        deduplicatr.file
-        [deduplicatr.hash :only [digest-of-long add-long-to-digest! digest-as-bigint]]
-        [clojure.java.io :only [file]]
-        )
-  (:require [fu.core :as fu])
+        deduplicatr.file)
+  (:require [fileutils.fu :as fu]
+            [deduplicatr.hash :refer [digest-of-long add-long-to-digest! digest-as-bigint]])
   (:import [org.apache.commons.codec.binary Hex]
            [java.security MessageDigest]
-           [java.io File RandomAccessFile]
            [java.nio.file Files Path]
            [java.nio.channels FileChannel]
            [deduplicatr.file FileSummary DirSummary]))
 
-; TODO: fix imports!!!
-
 (def testbytes (byte-array (map byte [0 1 2 3 4 5 6 7 8 9 10 11])))
 (def testbytes-partial (byte-array (map byte [0 1 2 4 5 6 9 10 11])))
 
-(defn file-with-data [bytes]
-  (let [f (Files/createTempFile "fu" ".test" fu/empty-file-attributes)
-            data (byte-array (map byte bytes))
-        _ (Files/write f data (fu/open-option-array :create))]
-    f))
-
-
-(fact "relative paths can be determined"
-  (relative-path (fu/path "base") (fu/path "base" "child" "grandchild")) => "child/grandchild")
-(fact "relative paths do nothing if child is not under base"
-  (relative-path (fu/path "foo") (fu/path "bar" "baz")) => "bar/baz")
-
 (against-background
   [(around :contents
-           (let [tempfile (file-with-data testbytes)
-                 empty-tempfile (File/createTempFile "deduplicatr_test" ".tmp")
-                 empty-tempfile-name (.getCanonicalPath empty-tempfile)
-                 ]
+           (let [tempfile (fu/temp-file-with-data testbytes)
+                 empty-tempfile (fu/temp-file-with-data (byte-array []))
+                 empty-tempfile-name (fu/get-path empty-tempfile)]
              (with-open [raf (fu/ro-file-channel tempfile)]
                ?form
                )))]
@@ -61,10 +43,10 @@
              (.update d testbytes-partial)
              (->FileSummary :group tempfile (digest-as-bigint d) 12))))
   (fact "hash of a zero byte file should be the same as hash of 0"
-        (file-summary :group (.toPath empty-tempfile))
+        (file-summary :group empty-tempfile)
         => (let [d (MessageDigest/getInstance "MD5")]
              (add-long-to-digest! 0 d)
-             (->FileSummary :group (.toPath empty-tempfile) (digest-as-bigint d) 0))))
+             (->FileSummary :group empty-tempfile (digest-as-bigint d) 0))))
 
 (fact "dir-summary has no hash nor size nor files"
   (empty-dir-summary :group (fu/path "foo"))

@@ -1,10 +1,9 @@
-(ns deduplicatr.fstree-test
+(ns deduplicatr.t-fstree
   (:require [midje.sweet :refer :all]
             [deduplicatr.fstree :refer :all]
             [deduplicatr.file :as df]
             [deduplicatr.hash :as dh]
-            [fu.core :as fu]
-            [clojure.java.io :refer [file]]))
+            [fileutils.fu :as fu]))
 
 (def fixtures (fu/path "test" "fixtures"))
 (def simple-fixture (fu/rel-path fixtures "simple"))

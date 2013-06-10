@@ -3,9 +3,8 @@
 (ns deduplicatr.fstree
   (:use deduplicatr.hash
         [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]]
-        [fu.core :as fu])
-  (:import [java.io File RandomAccessFile]
-           [java.nio.file Path]))
+        [fileutils.fu :as fu])
+  (:import [java.nio.file Path]))
 
 (defn treeify
   "traverses a directory, building a tree of contents as a map

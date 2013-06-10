@@ -1,4 +1,4 @@
-(ns deduplicatr.hash-test
+(ns deduplicatr.t-hash
   (:use midje.sweet
         deduplicatr.hash)
   (:import [org.apache.commons.codec.binary Hex]

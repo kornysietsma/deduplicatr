@@ -1,7 +1,7 @@
 ;; ## Logic to find duplicate sets in a tree of directory and file information.
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:require [fu.core :as fu])
+  (:require [fileutils.fu :as fu])
   (:import [deduplicatr.file FileSummary]
            [java.nio.file Path]))
 

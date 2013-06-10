@@ -1,4 +1,4 @@
-(ns fu.core
+(ns fileutils.fu
   (:import [java.nio ByteBuffer]
            [java.nio.file Path Paths Files OpenOption StandardOpenOption LinkOption]
            [java.nio.channels SeekableByteChannel FileChannel]
@@ -19,6 +19,9 @@
 (defn rel-path
   ^Path [^Path first & paths]
   (.resolve first (apply path paths)))
+
+(defn ^Path relative-to [^Path basepath ^Path path]
+  (.relativize basepath path))
 
 (defn size
   [^Path path]
@@ -84,3 +87,11 @@
 
 (defn is-symlink [^Path path]
   (Files/isSymbolicLink path))
+
+(defn temp-file-with-data
+  "create a temp file with specific byte data - mostly for tests"
+  [bytes]
+  (let [f (Files/createTempFile "fu" ".test" (into-array FileAttribute []))
+            data (byte-array (map byte bytes))
+        _ (Files/write f data (open-option-array :create))]
+    f))

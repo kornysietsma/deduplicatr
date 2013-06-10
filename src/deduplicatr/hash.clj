@@ -3,12 +3,9 @@
 (ns deduplicatr.hash
   (:import [java.security MessageDigest]
            [java.nio ByteBuffer]
-           [java.nio.file Path]
-           [java.io File RandomAccessFile]
            [java.math BigInteger]
            [org.apache.commons.codec.binary Hex]))
 
-; TODO: clean up imports!
 
  (defn add-long-to-digest!
    "add a long to a digest - mostly for testing"

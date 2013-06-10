@@ -2,12 +2,11 @@
 
 (ns deduplicatr.file
   (:use deduplicatr.hash)
-  (:require [fu.core :as fu])
+  (:require [fileutils.fu :as fu])
   (:import [java.security MessageDigest]
            [java.nio ByteBuffer]
            [java.nio.file Path]
            [java.nio.channels FileChannel]
-           [java.io File RandomAccessFile]
            [org.apache.commons.codec.binary Hex]))
 
 (def ^:dynamic hash-chunk-size
@@ -20,31 +19,6 @@
   (^bytes [^FileChannel channel offset] (chunk-of-file channel hash-chunk-size offset))
   (^bytes [^FileChannel channel size offset]
           (fu/read-bytes channel offset size)))
-
-(defn old-chunk-of-file
-   "read part of a binary file as a byte array
-
-   note - no error handling, assumes there are [size] bytes available at [offset]"
-   (^bytes [^RandomAccessFile filehandle offset] (chunk-of-file filehandle hash-chunk-size offset))
-   (^bytes [^RandomAccessFile filehandle size offset]
-     (let [buffer (byte-array size)]
-            ; bizarrely, the 'offset' in .read is the _destination_ offset! so need to seek:
-            (.seek filehandle offset)
-            (.read filehandle buffer 0 size)
-            buffer)))
-
-(defn relative-path [^Path basepath ^Path path]
-  (if (.startsWith path basepath)
-    (.toString (.relativize basepath path))
-    (.toString path)))
-; TODO: can we get rid of .toString?
-
-#_(defn relative-path [^File basefile ^File file]
-  (let [absbase (str (.getAbsolutePath basefile) "/")
-        absfile (.getAbsolutePath file)]
-    (if (.startsWith absfile absbase)
-      (.substring absfile (.length absbase))
-      (.getPath file))))
 
 (defprotocol Summary
   (file-count [this])
@@ -59,7 +33,7 @@
   (file-count [this]
     1)
   (print-summary [this basefile]
-    (str (.group this) ": " (relative-path basefile (.file this)))))
+    (str (.group this) ": " (fu/relative-to basefile (.file this)))))
 
 ;; ### DirSummary holds summary info about a dir
 ;; * 'bytes' is the cumulative size
@@ -70,7 +44,7 @@
   (file-count [this]
     (.filecount this))
   (print-summary [this basefile]
-     (str (.group this) ": " (relative-path basefile (.file this)) "/ (" (.filecount this) " files)")))
+     (str (.group this) ": " (fu/relative-to basefile (.file this)) "/ (" (.filecount this) " files)")))
 
 (defn file-summary
    "Build a FileSummary for a physical file

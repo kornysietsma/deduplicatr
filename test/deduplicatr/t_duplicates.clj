@@ -1,12 +1,12 @@
-(ns deduplicatr.duplicates-test
+(ns deduplicatr.t-duplicates
   (:require [midje.sweet :refer :all]
             [deduplicatr.duplicates :refer :all]
-            [fu.core :as fu]
+            [fileutils.fu :as fu]
             [deduplicatr.fstree :refer [treeify]]
             [deduplicatr.file :refer [->FileSummary ->DirSummary]]))
 
 (def fixtures (fu/path "test" "fixtures"))
-(def simple-fixture (fu/path "test" "fixtures" "simple"))
+(def simple-fixture (fu/rel-path fixtures "simple"))
 
 (defn make-simplest-tree [group] {
    :files [(->FileSummary group (fu/path "tree" "foo.txt") 10000, 1) ]

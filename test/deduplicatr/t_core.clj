@@ -1,15 +1,14 @@
-(ns deduplicatr.core-test
+(ns deduplicatr.t-core
   (:require
    [midje.sweet :refer :all]
    [deduplicatr.core :refer :all]
    [deduplicatr.duplicates :refer [duplicates]]
    [deduplicatr.fstree :refer [treeify]]
-   [fu.core :as fu]
-   [clojure.java.io :refer [file]]))
+   [fileutils.fu :as fu]))
 
 (def fixtures (fu/path "test" "fixtures"))
-(def simple-fixture (fu/path "test" "fixtures" "simple"))
-(def complex-fixture (fu/path "test" "fixtures" "complex"))
+(def simple-fixture (fu/rel-path fixtures "simple"))
+(def complex-fixture (fu/rel-path fixtures "complex"))
 
 (defmacro with-out-ignored
   [& body]
