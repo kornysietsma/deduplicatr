@@ -4,7 +4,10 @@
    [deduplicatr.core :refer :all]
    [deduplicatr.duplicates :refer [duplicates]]
    [deduplicatr.fstree :refer [treeify]]
+   [taoensso.timbre :as timbre]
    [fileutils.fu :as fu]))
+
+(timbre/set-level! :warn)
 
 (def fixtures (fu/path "test" "fixtures"))
 (def simple-fixture (fu/rel-path fixtures "simple"))

@@ -1,9 +1,12 @@
 ;; ## Functions to build and manipulate "fstree"s - trees of file system information and summaries.
 ;; some of this is best documented through the tests - see the test directory in the source.
 (ns deduplicatr.fstree
-  (:use deduplicatr.hash
-        [deduplicatr.file :only [file-summary dir-summary empty-dir-summary]]
-        [fileutils.fu :as fu])
+  (:use deduplicatr.hash)
+  (:require 
+   [deduplicatr.file :refer [file-summary dir-summary empty-dir-summary]]
+   [fileutils.fu :as fu]
+   [deduplicatr.throttler :as throttler]
+   [taoensso.timbre :refer [info]])
   (:import [java.nio.file Path]))
 
 (defn treeify
@@ -14,13 +17,14 @@
 *     :dirs -> a seq of each child dir's tree structure
 *     :summary -> the DirSummary of the directory - it's name, size, file count, and accumulated hash of all descendants"
 
-  [group ^Path dir]
+  [group ^Path dir progress-agent]
     (let [initial-dir-summary (empty-dir-summary group dir)  ; 1-arg call gives an initial summary
+          _ (throttler/run progress-agent #(info "processing" (fu/get-path dir)))
           children (fu/children dir)
           child-files (filter fu/is-real-file children)
           child-dirs (filter fu/is-real-dir children)
           child-file-summaries (map (partial file-summary group) child-files)
-          child-dir-trees (map (partial treeify group) child-dirs)
+          child-dir-trees (map #(treeify group % progress-agent) child-dirs)
           all-child-summaries (concat child-file-summaries (map :summary child-dir-trees))
           my-summary (if (seq all-child-summaries) ; if we have any children at all
                          (apply dir-summary initial-dir-summary all-child-summaries)

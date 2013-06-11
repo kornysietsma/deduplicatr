@@ -3,6 +3,7 @@
             [deduplicatr.duplicates :refer :all]
             [fileutils.fu :as fu]
             [deduplicatr.fstree :refer [treeify]]
+            [deduplicatr.throttler :as throttler]
             [deduplicatr.file :refer [->FileSummary ->DirSummary]]))
 
 (def fixtures (fu/path "test" "fixtures"))
@@ -88,7 +89,7 @@
 
    ; TODO: redundant?  See integration test in core_test.clj
   (fact "if there are more than one duplicate, return them sorted as above"
-        (let [complex-result (duplicates [(treeify :group simple-fixture)])]
+        (let [complex-result (duplicates [(treeify :group simple-fixture (throttler/new-agent 100000000))])]
       (count complex-result) 
       => 3
       (map #(:bytes (first %)) complex-result)

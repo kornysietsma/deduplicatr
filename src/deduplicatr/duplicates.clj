@@ -1,7 +1,8 @@
 ;; ## Logic to find duplicate sets in a tree of directory and file information.
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
-  (:require [fileutils.fu :as fu])
+  (:require [fileutils.fu :as fu]
+            [taoensso.timbre :refer [info]])
   (:import [deduplicatr.file FileSummary]
            [java.nio.file Path]))
 
@@ -59,6 +60,10 @@
     (fn [index item] (if (is-ancestor-of-any item (nthrest summaries (inc index))) nil item))
     summaries))
 
+(defn- log-in-thread [message thread-thing]
+  (info message)
+  thread-thing)
+
 (defn duplicates
   "finds duplicate directory/file sets in seq of fstrees
    * returns a seq of seqs of identical files/directories
@@ -68,9 +73,14 @@
   [trees]
   (->> trees
        (#(flatten (map fstree-seq %)))
+       (log-in-thread "sorting...")
        (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
+       (log-in-thread "partitioning")
        (partition-by :hash) ; partition into subseqs by hash
+       (log-in-thread "removing unduplicated")
        (filter next) ; remove any with a single subseq (i.e. not a duplicate)
+       (log-in-thread "removing ancestors")
        (map without-ancestors) ; remove ancestors
+       (log-in-thread "removing unduplicated again")
        (filter next)) ; remove non-duplicates again after ancestor prune
 )

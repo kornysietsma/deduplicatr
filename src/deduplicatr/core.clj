@@ -4,7 +4,10 @@
             [clojure.tools.cli :refer [cli]]
             [deduplicatr.duplicates :refer [duplicates]]
             [deduplicatr.fstree :refer [treeify]]
-            [deduplicatr.file :refer [print-summary]])
+            [deduplicatr.file :refer [print-summary]]
+            [deduplicatr.throttler :as throttler]
+            [taoensso.timbre :as timbre
+             :refer [trace debug info warn error fatal spy]])
   (:gen-class :main true))
 
 ;; ## a command-line application for finding duplicates in a file system
@@ -16,18 +19,20 @@
   (map (comp str char) (iterate inc (int \a))))
 
 (defn treeify-named
-  [named-roots]
+  [named-roots prog-agent]
   (for [[group root] named-roots]
     (do 
-      (println "reading files from: (" group ") " (fu/get-path root))
-      (treeify group root))))
+      (info "reading files from: (" group ") " (fu/get-path root))
+      (treeify group root prog-agent))))
 
 (defn find-dups
   [named-roots]
-  (let [trees (treeify-named named-roots)
-        _ (println "looking for duplicates...")
+  (info "looking for duplicates...")
+  (let [progress-agent (throttler/new-agent 10000)
+        _ (throttler/run progress-agent #(info "(progress logged every 10 secs only)"))
+        trees (treeify-named named-roots progress-agent)
         dups (duplicates trees)
-        _ (println "dups found")]
+        _ (println "duplicates:")]
     dups))
 
 (defn show-duplicates
@@ -40,6 +45,10 @@
     (doseq [summary identical-files]
       (let [base (named-roots (.group summary))]
         (println "  " (print-summary summary base)))))))
+
+(defn- terse-prefix-fn
+  [{:keys [level]}]
+  (-> level name clojure.string/upper-case))
 
 (defn -main
   "The main entry point - collects command-line arguments and calls show-duplicates."
@@ -57,7 +66,9 @@
       (System/exit 1))
     (doseq [root roots]
       (when (not (fu/is-real-dir root))
-        (println (.getPath root) " is not a valid directory")
+        (println (fu/get-path root) " is not a valid directory")
         (System/exit 1)))
+    (timbre/set-config! [:prefix-fn] terse-prefix-fn)
     (show-duplicates roots)
+    (shutdown-agents)
     ))
