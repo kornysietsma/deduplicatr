@@ -1,6 +1,7 @@
 TODO:
+- log file counts / bytes instead of / as well as names
+- ? scan directory first so we can log %complete
 - sort by number of files instead of just size
-- add logging, especially progress on slow jobs, file counts
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
 - use config files for common config patterns like ignores
 longer term:
@@ -16,3 +17,4 @@ Done:
 - handle multiple sources
 - filter file prefixes in output (especially now we have group names) 
 - ignores symlinks!
+- add logging, especially progress on slow jobs
