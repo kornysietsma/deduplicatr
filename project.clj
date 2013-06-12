@@ -12,5 +12,5 @@
                              [lein-marginalia "0.7.1"]]  }}
   :min-lein-version "2.0.0"
   :main deduplicatr.core
-  :jvm-opts ["-Xmx2048m" "-Xss100m"] 
+  :jvm-opts ["-Xmx7500m" "-Xss100m"] 
 )

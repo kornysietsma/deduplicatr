@@ -2,7 +2,8 @@
 
 (ns deduplicatr.file
   (:use deduplicatr.hash)
-  (:require [fileutils.fu :as fu])
+  (:require [fileutils.fu :as fu]
+            [deduplicatr.progress-logger :as plog])
   (:import [java.security MessageDigest]
            [java.nio ByteBuffer]
            [java.nio.file Path]
@@ -53,8 +54,7 @@
 * for larger files, hash is the md5sum of the file size + the start of the file + the middle of the file + the end of the file"
    [group ^Path file]
    (let [md (MessageDigest/getInstance "MD5")
-         size (fu/size file)
-         ]
+         size (fu/size file)]
      (add-long-to-digest! size md)
      (with-open [raf (fu/ro-file-channel file)] ; TODO rename this and other symbols
        (if (> size (* hash-chunk-size 3))

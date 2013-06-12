@@ -1,5 +1,6 @@
 TODO:
-- log file counts / bytes instead of / as well as names
+- test progress-logger
+- catch exceptions! (my NAS sometimes screws up)
 - ? scan directory first so we can log %complete
 - sort by number of files instead of just size
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
@@ -18,3 +19,4 @@ Done:
 - filter file prefixes in output (especially now we have group names) 
 - ignores symlinks!
 - add logging, especially progress on slow jobs
+- log file counts / bytes instead of / as well as names

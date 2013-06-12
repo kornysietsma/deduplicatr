@@ -6,6 +6,7 @@
             [deduplicatr.fstree :refer [treeify]]
             [deduplicatr.file :refer [print-summary]]
             [deduplicatr.throttler :as throttler]
+            [deduplicatr.progress-logger :as plog]
             [taoensso.timbre :as timbre
              :refer [trace debug info warn error fatal spy]])
   (:gen-class :main true))
@@ -19,18 +20,19 @@
   (map (comp str char) (iterate inc (int \a))))
 
 (defn treeify-named
-  [named-roots prog-agent]
+  [named-roots logger]
   (for [[group root] named-roots]
     (do 
       (info "reading files from: (" group ") " (fu/get-path root))
-      (treeify group root prog-agent))))
+      (treeify group root logger))))
 
 (defn find-dups
   [named-roots]
   (info "looking for duplicates...")
-  (let [progress-agent (throttler/new-agent 10000)
-        _ (throttler/run progress-agent #(info "(progress logged every 10 secs only)"))
-        trees (treeify-named named-roots progress-agent)
+  (let [progress-agent (throttler/new-agent 30000)
+        logger (plog/new-logger progress-agent)
+        _ (throttler/run progress-agent #(info "(progress logged every 30 secs only)"))
+        trees (treeify-named named-roots logger)
         dups (duplicates trees)
         _ (println "duplicates:")]
     dups))
