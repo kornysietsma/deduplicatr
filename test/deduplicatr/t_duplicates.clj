@@ -100,3 +100,42 @@
       => ["b.txt" "b.txt" "child_b.txt" "parent_b.txt"]
       (map #(fu/file-name (:file %)) (nth complex-result 2)) 
       => ["a.txt" "a.txt" "child_a.txt" "parent_a.txt"])))
+
+(facts "about descentant detection"
+       (fact "a group is a descendant if all files have ancestors"
+             (all-descendants-of
+              [(->FileSummary :g (fu/path "a" "b") 1 1)
+               (->FileSummary :h (fu/path "c" "d") 1 1)
+               (->FileSummary :g (fu/path "a" "e") 1 1)]
+              [(->DirSummary :g (fu/path "a") 2 1 99)
+               (->DirSummary :h (fu/path "c") 2 1 99)
+               (->FileSummary :z (fu/path "q") 2 1)])
+             => truthy
+             (all-descendants-of
+              [(->FileSummary :g (fu/path "a" "b") 1 1)
+               (->FileSummary :g (fu/path "c" "d") 1 1)]
+              [(->DirSummary :g (fu/path "a") 2 1 17)])
+             => false)
+       (fact "can prune all children from summary groups"
+             (prune-children
+              [[(->DirSummary :g (fu/path "a") 1 20 0)]  ; parent 1
+               [(->DirSummary :g (fu/path "b") 2 10 0)
+                (->DirSummary :g (fu/path "bdup") 2 10 0)] ; parent 2
+               [(->FileSummary :g (fu/path "a" "b") 2 5)] ; prune child 1
+               [(->FileSummary :g (fu/path "a" "c") 3 4)
+                (->FileSummary :g (fu/path "q") 3 4)] ; can't prune, not all in 1
+               [(->FileSummary :g (fu/path "b" "z") 4 3)
+                (->FileSummary :g (fu/path "bdup" "z" "w00t") 4 3)] ; prune child of 2
+               [(->FileSummary :g (fu/path "a" "b" "c") 5 2)] ; prune grandchild of 1
+               [(->FileSummary :g (fu/path "z" "z") 6 1)] ; can't prune
+               ]
+              )
+             => (just
+                 [(->DirSummary :g (fu/path "a") 1 20 0)]  ; parent 1
+                 [(->DirSummary :g (fu/path "b") 2 10 0)
+                  (->DirSummary :g (fu/path "bdup") 2 10 0)] ; parent 2
+                 [(->FileSummary :g (fu/path "a" "c") 3 4)
+                  (->FileSummary :g (fu/path "q") 3 4)] ; can't prune, not all in 1
+                 [(->FileSummary :g (fu/path "z" "z") 6 1)] ; can't prune
+                 )))
+

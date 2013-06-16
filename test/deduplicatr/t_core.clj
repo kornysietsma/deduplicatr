@@ -74,14 +74,15 @@
        (file-like {:name "one.txt"})))
   )
 
+(fact "duplicates in a tree don't include child dirs if their parents match"
+  (find-dups-quietly {"a" (fu/rel-path fixtures "no-kids")})
+  => (just
+      (two-of
+       (dir-like {:bytes 13 :filecount 2}))))
+
 (fact "multiple directories can be checked"
   (find-dups-quietly {"a" (fu/rel-path simple-fixture "ab") "b" (fu/rel-path simple-fixture "ab_split")})
   => (just
       (just (dir-like {:group "a" :name "ab"})
-            (dir-like {:group "b" :name "ab_split"}))
-      (just
-       (file-like {:group "a" :name "b.txt"})
-       (file-like {:group "b" :name "b.txt"}))
-      (just
-       (file-like {:group "a" :name "a.txt"})
-       (file-like {:group "b" :name "a.txt"}))))
+            (dir-like {:group "b" :name "ab_split"}))))
+; note other children of this test case pruned by prune-children

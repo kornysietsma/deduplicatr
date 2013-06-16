@@ -2,7 +2,7 @@
 (ns deduplicatr.duplicates
   (:use deduplicatr.fstree)
   (:require [fileutils.fu :as fu]
-            [taoensso.timbre :refer [info]])
+            [taoensso.timbre :refer [info] :as timbre])
   (:import [deduplicatr.file FileSummary]
            [java.nio.file Path]))
 
@@ -28,21 +28,16 @@
   [(- (:bytes summary)) (:hash summary) (fu/get-path (:file summary))])
 
 (defn is-ancestor-of
-  [^Path file1 ^Path file2]
-  (and (.startsWith file2 file1)
-       (not (= file2 file1))))
-
-#_(defn is-ancestor-of
-  "checks if a file is another file's ancestor - assumes they share a common root directory"
-  [^Path file1 ^Path file2]
-  (.startsWith (.getPath file2) (str (.getPath file1) File/separator)))
+  [^Path ancestor ^Path descendant]
+  (and (.startsWith descendant ancestor)
+       (not (= descendant ancestor))))
 
 (defn is-summary-ancestor-of
   "checks if a FileSummary is another FileSummary's ancestor - assumes they share a common root directory"
-  [summary1 summary2]
+  [ancestor descendant]
   (and
-   (= (:group summary1) (:group summary2))
-   (is-ancestor-of (:file summary1) (:file summary2))))
+   (= (:group ancestor) (:group descendant))
+   (is-ancestor-of (:file ancestor) (:file descendant))))
 
 (defn- is-ancestor-of-any
   "check if a summary is the ancestor of any of a list of other FileSummaries"
@@ -64,6 +59,40 @@
   (info message)
   thread-thing)
 
+(defn all-descendants-of
+  "true if all members of a group are descendants of members of another group"
+  [group possible-ancestor]
+  (every?
+   (fn [summary]
+     (some
+      (fn [ancestor-summary]
+        (is-summary-ancestor-of ancestor-summary summary))
+      possible-ancestor))
+   group))
+
+(defn all-descendants-of-any
+  "true if all members of a group are descendants of one of the supplied groups"
+  [group groups]
+  (some (partial all-descendants-of group) groups))
+
+(defn child-pruning-reducer [groups-so-far group]
+  (if (all-descendants-of-any group groups-so-far)
+    groups-so-far
+    (conj groups-so-far group)))
+
+(defn prune-children
+  "given a seq of duplicate summary groups, in decreasing size order,
+   remove any that are children of an earlier group.
+   note that all groups in the child group must have ancestors in the same ancestor group"
+  [groups]
+  (reduce child-pruning-reducer
+          '[]
+          groups))
+
+(defn- remove-singles
+  [summary-groups]
+  (filter next summary-groups))
+
 (defn duplicates
   "finds duplicate directory/file sets in seq of fstrees
    * returns a seq of seqs of identical files/directories
@@ -78,9 +107,11 @@
        (log-in-thread "partitioning")
        (partition-by :hash) ; partition into subseqs by hash
        (log-in-thread "removing unduplicated")
-       (filter next) ; remove any with a single subseq (i.e. not a duplicate)
+       remove-singles ; remove any with a single subseq (i.e. not a duplicate)
        (log-in-thread "removing ancestors")
        (map without-ancestors) ; remove ancestors
        (log-in-thread "removing unduplicated again")
-       (filter next)) ; remove non-duplicates again after ancestor prune
-)
+       remove-singles ; remove non-duplicates again after ancestor
+; prune
+       (log-in-thread "pruning subsets of groups already matched")
+       prune-children)) ; remove child groups that match earlier ones

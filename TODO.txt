@@ -1,10 +1,8 @@
 TODO:
-- test progress-logger
-- profile
 - sort files/dirs so progress is clearer for big scans  
-- don't show a/foo and b/bar as matching if a and b match
 - ? scan directory first so we can log %complete
-- sort by number of files instead of just size
+- allow sorting by number of files instead of just size
+- add a 'diff' command for examining similar dirs once duplicates found
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
 - use config files for common config patterns like ignores
 longer term:
@@ -23,3 +21,5 @@ Done:
 - add logging, especially progress on slow jobs
 - log file counts / bytes instead of / as well as names
 - catch exceptions! (my NAS sometimes screws up)
+- test progress-logger
+- don't show a/foo and b/bar as matching if a and b match

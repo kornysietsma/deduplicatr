@@ -73,7 +73,7 @@
   [^Path path]
   (-> path .toString))
 
-(def use-path false)
+(def use-path true)
 
 (defn children [^Path path]
   (if use-path
