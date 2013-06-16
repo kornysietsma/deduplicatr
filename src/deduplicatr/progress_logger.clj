@@ -13,11 +13,11 @@
 (def meg (* 1024 kilo))
 (def gig (* 1024 meg))
 
-(defn- bytefmt [bytes]
+(defn bytefmt [bytes]
   (cond
-   (> bytes gig) (format "%,.3f gb" (/ (double bytes) gig))
-   (> bytes meg) (format "%,.3f mb" (/ (double bytes) meg))
-   (> bytes kilo) (format "%,.3f kb" (/ (double bytes) kilo))
+   (>= bytes gig) (format "%,.3f gb" (/ (double bytes) gig))
+   (>= bytes meg) (format "%,.3f mb" (/ (double bytes) meg))
+   (>= bytes kilo) (format "%,.3f kb" (/ (double bytes) kilo))
    :else (format "%,d b" bytes)
   ))
 

@@ -73,9 +73,14 @@
   [^Path path]
   (-> path .toString))
 
+(def use-path false)
+
 (defn children [^Path path]
-  (with-open [ds (Files/newDirectoryStream path)]
-    (doall (seq ds))))
+  (if use-path
+    (with-open [ds (Files/newDirectoryStream path)]
+      (doall (seq ds))))
+  (doall (map #(.toPath %) (.listFiles (.toFile path)))))
+
 
 (def no-links (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
 

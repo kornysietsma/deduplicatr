@@ -43,7 +43,7 @@
   (let [named-roots (into {} (map vector (letters) roots))
         dups (find-dups named-roots)]
   (doseq [identical-files dups]
-    (println (count identical-files) " matches of size " (.bytes (first identical-files)))
+    (println (format "%,d matches of %,d bytes" (count identical-files) (.bytes (first identical-files))))
     (doseq [summary identical-files]
       (let [base (named-roots (.group summary))]
         (println "  " (print-summary summary base)))))))

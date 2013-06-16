@@ -3,7 +3,8 @@
 (ns deduplicatr.file
   (:use deduplicatr.hash)
   (:require [fileutils.fu :as fu]
-            [deduplicatr.progress-logger :as plog])
+            [deduplicatr.progress-logger :as plog]
+            [taoensso.timbre :as timbre])
   (:import [java.security MessageDigest]
            [java.nio ByteBuffer]
            [java.nio.file Path]
@@ -56,16 +57,20 @@
    (let [md (MessageDigest/getInstance "MD5")
          size (fu/size file)]
      (add-long-to-digest! size md)
-     (with-open [raf (fu/ro-file-channel file)] ; TODO rename this and other symbols
-       (if (> size (* hash-chunk-size 3))
-         (do
-           (.update md (chunk-of-file raf 0))
-           (.update md (chunk-of-file raf  (- (/ size 2) (/ hash-chunk-size 2))))
-           (.update md (chunk-of-file raf (- size hash-chunk-size))))
-         (.update md (chunk-of-file raf size 0))
-       )
-       (->FileSummary group file (digest-as-bigint md) size)
-     )))
+     (try
+       (with-open [raf (fu/ro-file-channel file)] ; TODO rename this and other symbols
+         (if (> size (* hash-chunk-size 3))
+           (do
+             (.update md (chunk-of-file raf 0))
+             (.update md (chunk-of-file raf  (- (/ size 2) (/ hash-chunk-size 2))))
+             (.update md (chunk-of-file raf (- size hash-chunk-size))))
+           (.update md (chunk-of-file raf size 0))
+           )
+         (->FileSummary group file (digest-as-bigint md) size)
+         )
+       (catch Exception e
+         (timbre/error e "Exception caught processing " (fu/get-path file))
+         (->FileSummary group file (bigint 0) size)))))
 
 (defn empty-dir-summary
   "Starting FileSummary for a directory with no files"
