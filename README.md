@@ -10,11 +10,25 @@ Note that as of the latest update, you need Java 7 to build and run this, as it 
 
 Currently this needs Java 7, and leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, for running without clojure/leiningen.
 
-Usage at this stage is simple:
+Usage at this stage is fairly simple:
 
-$ lein run [base directory]
+$ lein run [directories]
+
+$ java -jar deduplicatr.jar [directories]
 
 This will scan all files in the directory, then print out all duplicate directories / files, largest first.  Pipe the results through "less" or similar if you get a lot of output
+
+For help/options you need to specify '--' to skip leiningen option processing:
+
+$ lein run -- -h
+
+$ java -jar deduplicatr.jar -h
+
+You can ignore files and directories with "-i" and a comma-separated list of names - note this is only exact names at this stage (and you can't ignore a name with a comma in it!).  By default the MacOS metadata file ".DS_Store" is ignored, but you can specify your own list:
+
+$ lein run -- -i ".git,.svn,.DS_Store" foo/bar
+
+$ java -jar deduplicatr.jar -i ".git,.svn,.DS_Store" foo/bar
 
 ## Documentation
 Introductory documentation is in [the wiki on github](https://github.com/kornysietsma/deduplicatr/wiki).

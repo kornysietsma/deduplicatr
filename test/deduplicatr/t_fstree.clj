@@ -45,11 +45,19 @@
                 (df/->FileSummary :group (fu/rel-path simple-fixture "parent" "child" "child_b.txt") 1N, 1)]
         :dirs [{:files []
                 :dirs []
-                :summary (df/->DirSummary :group 
-                                           (fu/rel-path simple-fixture "parent" "child" "empty_grandchild")
-                                           0N 0 0)}]
+                :summary (df/->DirSummary
+                          :group 
+                          (fu/rel-path simple-fixture "parent" "child" "empty_grandchild")
+                          0N 0 0)}]
         :summary (df/->DirSummary :group (fu/rel-path simple-fixture "parent" "child") 2N 2 2)})
-  
+
+  (fact "treeifying ignores files and dirs that match specified patterns"
+        (treeify :group (fu/rel-path simple-fixture "parent" "child") null-logger
+                 {:ignore #{"child_b.txt" "empty_grandchild"}})
+        => {:files [(df/->FileSummary :group (fu/rel-path simple-fixture "parent" "child" "child_a.txt") 1N, 1)]
+            :dirs []
+            :summary (df/->DirSummary :group (fu/rel-path simple-fixture "parent" "child") 1N 1 1)})
+
   (fact "the summary of a directory includes the accumulated summary from all descendant files"
     (:summary (treeify :group (fu/rel-path simple-fixture "parent") null-logger))
     => (df/->DirSummary :group (fu/rel-path simple-fixture "parent") 4N 4 4)))
