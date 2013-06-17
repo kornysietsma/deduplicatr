@@ -25,8 +25,7 @@
   [group ^Path dir logger]
   (let [initial-dir-summary (empty-dir-summary group dir)  ; 1-arg call gives an initial summary
         _ (when logger (plog/log-dir logger (fu/get-path dir)))
-
-        children (fu/children dir)
+        children (sort-by fu/file-name (fu/children dir))
         child-files (filter fu/is-real-file children)
         child-dirs (filter fu/is-real-dir children)
         child-file-summaries (map (partial summarize-file-and-log logger group) child-files)

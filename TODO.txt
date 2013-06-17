@@ -4,6 +4,7 @@ TODO:
 - allow sorting by number of files instead of just size
 - add a 'diff' command for examining similar dirs once duplicates found
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
+- default to at least .DS_Store !!
 - use config files for common config patterns like ignores
 longer term:
 - cache tree data in file or db, allow for rapid re-scanning, comparing to non-mounted media.
