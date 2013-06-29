@@ -1,8 +1,9 @@
 TODO:
+- use "a", "b" not :a :b in diff mode, for nicer output
 - ? scan directory first so we can log %complete
 - ? consider more unit tests for diffs.clj
-- allow sorting by number of files instead of just size
 - use config files for common config patterns like ignores
+- fix documentation on github, put uberjar somewhere for others to download
 longer term:
 - cache tree data in file or db, allow for rapid re-scanning, comparing to non-mounted media.
 - look for superset/subset; if we meet 2 directories with a lot of dups, clump the dups together
@@ -24,3 +25,4 @@ Done:
 - add ignore patterns e.g. hidden files, .git / .svn  / .cvs etc - needs to be configurable
 - default to at least .DS_Store !!
 - add a 'diff' command for examining similar dirs once duplicates found
+- allow sorting by number of files instead of just size

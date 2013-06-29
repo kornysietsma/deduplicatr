@@ -27,6 +27,12 @@
   [summary]
   [(- (:bytes summary)) (:hash summary) (fu/get-path (:file summary))])
 
+(defn count-and-size-and-hash-sort-key-for-groups
+  "sort key for sorting groups of Summaries by (decreasing) file count, then (decreasing) size, then by hash"
+  [summary-group]
+  (let [summary (first summary-group)]
+    [(- (.file-count summary)) (- (:bytes summary)) (:hash summary) (fu/get-path (:file summary))]))
+
 (defn is-ancestor-of
   [^Path ancestor ^Path descendant]
   (and (.startsWith descendant ancestor)
@@ -93,25 +99,32 @@
   [summary-groups]
   (filter next summary-groups))
 
+(defn- sort-by-files [summary-groups]
+  (sort-by count-and-size-and-hash-sort-key-for-groups summary-groups))
+
 (defn duplicates
   "finds duplicate directory/file sets in seq of fstrees
    * returns a seq of seqs of identical files/directories
    * results are sorted so the largest sets are first
    * assumes fstrees know about groups already
    "
-  [trees]
-  (->> trees
-       (#(flatten (map fstree-seq %)))
-       (log-in-thread "sorting...")
-       (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
-       (log-in-thread "partitioning")
-       (partition-by :hash) ; partition into subseqs by hash
-       (log-in-thread "removing unduplicated")
-       remove-singles ; remove any with a single subseq (i.e. not a duplicate)
-       (log-in-thread "removing ancestors")
-       (map without-ancestors) ; remove ancestors
-       (log-in-thread "removing unduplicated again")
-       remove-singles ; remove non-duplicates again after ancestor
-; prune
-       (log-in-thread "pruning subsets of groups already matched")
-       prune-children)) ; remove child groups that match earlier ones
+  ([trees] (duplicates trees {}))
+  ([trees options]
+     (->> trees
+          (#(flatten (map fstree-seq %)))
+          (log-in-thread "sorting...")
+          (sort-by size-and-hash-sort-key) ; sort largest first, then by hash
+          (log-in-thread "partitioning")
+          (partition-by :hash) ; partition into subseqs by hash
+          (log-in-thread "removing unduplicated")
+          remove-singles ; remove any with a single subseq (i.e. not a duplicate)
+          (log-in-thread "removing ancestors")
+          (map without-ancestors) ; remove ancestors
+          (log-in-thread "removing unduplicated again")
+          remove-singles ; remove non-duplicates again after ancestor
+                                        ; prune
+          (log-in-thread "pruning subsets of groups already matched (slow for big dirs)")
+          prune-children ; remove child groups that match earlier ones
+          (#(if (= (:sort-by options) :files)
+              (sort-by-files %)
+              %))))) 

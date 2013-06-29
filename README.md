@@ -6,25 +6,23 @@ Note that as of the latest update, you need Java 7 to build and run this, as it 
 
 ## Usage
 
-Currently this needs Java 7, and leningen 2.0+ to run - you can use "lein uberjar" to produce a standalone runnable jar, for running without clojure/leiningen.
+Currently this needs Java 7, and leningen 2.0+ to run - you can use `"lein uberjar"` to produce a standalone runnable jar, for running without clojure/leiningen.
 
 Generally it's fastest to generate an uberjar and then run the commands with:
 
-$ java -jar deduplicatr.jar [parameters]
+`$ java -jar deduplicatr.jar [parameters]`
 
 In dev mode you can use "lein run" to run it while playing with changes; the command is then
 
-$ lein run [parameters]
+`$ lein run [parameters]`
 
 If you want to pass extra options you need a "--" to tell leiningen to pass commands to the app:
 
-$ lein run -- [parameters]
-
-Usage at this stage is fairly simple:
+`$ lein run -- [parameters]`
 
 ### Standard mode - duplicate finding
 
-$ java -jar deduplicatr.jar [directories]
+`$ java -jar deduplicatr.jar [directories]`
 
 This will scan all files in the directory, then print out all duplicate directories / files, largest first.  Pipe the results through "less" or similar if you get a lot of output.
 
@@ -42,17 +40,9 @@ duplicates:
 
 This indicates that "foo/" and "bar/" both have a project gutenberg dump from old backups, and that "bar/" and "baz/" both have a copy of the Joy of Clojure (a great book!)
 
-For more help run:
-
-$ java -jar deduplicatr.jar -h
-
-You can ignore files and directories with "-i" and a comma-separated list of names - note this is only exact names at this stage (and you can't ignore a name with a comma in it!).  By default the MacOS metadata file ".DS_Store" is ignored, but you can specify your own list:
-
-$ java -jar deduplicatr.jar -i ".git,.svn,.DS_Store" foo/bar
-
 ### Diff mode - finding differences between two directories
 
-$ java -jar deduplicatr.jar --diff [directory a] [directory b]
+`$ java -jar deduplicatr.jar --diff [directory a] [directory b]`
 
 This will scan two similar directories, and output:
 
@@ -91,8 +81,31 @@ in dir_b:
 
 and the individual files "a.txt", "foo.txt" etc. are not listed.
 
+### Other options
+
+#### Ignoring files
+
+You can ignore files and directories with "-i" and a comma-separated list of names - note this is only exact names at this stage (and you can't ignore a name with a comma in it!).  By default the MacOS metadata file ".DS_Store" is ignored, but you can specify your own list:
+
+`$ java -jar deduplicatr.jar -i ".git,.svn,.DS_Store" foo/bar`
+
+#### Sorting by file count
+
+By default, deduplicatr sorts big directories first.
+
+If you specify "--by-files" it will instead sort by file counts - so big directories will be listed first, even if they count for fewer total bytes than a few large files elsewhere.
+
+Note this won't work currently for diff mode - which doesn't clump groups of files together anyway.
+
+#### Help
+
+For command line help run
+
+`$ java -jar deduplicatr.jar -h`
+
 ## Documentation
-Out of date documentation is in [the wiki on github](https://github.com/kornysietsma/deduplicatr/wiki) - this file is probably the best you'll get for now.
+Out of date documentation is in [the wiki on github](https://github.com/kornysietsma/deduplicatr/wiki) - what you are reading is probably more useful right now
+
 The [tests](https://github.com/kornysietsma/deduplicatr/tree/master/test/deduplicatr) are also a great way to understand what is going on - this project is mostly test-driven.
 
 ## Thanks

@@ -22,10 +22,11 @@
        ))
 
 (defn find-dups-quietly
-  "just to keep functional testing simpler" 
-  [roots]
-  (with-out-ignored
-    (find-dups roots {:ignore #{}})))
+  "just to keep functional testing simpler"
+  ([roots] (find-dups-quietly roots {}))
+  ([roots options]
+      (with-out-ignored
+        (find-dups roots (merge options {:ignore #{}})))))
 
 (defn find-diffs-quietly
   [root1 root2]
@@ -79,6 +80,24 @@
       (three-of
        (file-like {:name "one.txt"})))
   )
+
+(fact "you can sort results by number of files rather than just size"
+  (find-dups-quietly {"a" complex-fixture} {:sort-by :files})
+  => (just
+      (two-of
+       (dir-like {:name "123"}))
+      (just
+       (file-like {:bytes 108 :name "big_files/my_old_file.txt"})
+       (file-like {:bytes 108 :name "big_files/my_other_old_file.txt"})
+       :in-any-order)             
+      (three-of
+       (file-like {:name "three.txt"}))
+      (three-of
+       (file-like {:name  "two.txt"}))
+      (three-of
+       (file-like {:name "one.txt"}))
+      ))
+
 
 (fact "duplicates in a tree don't include child dirs if their parents match"
   (find-dups-quietly {"a" (fu/rel-path fixtures "no-kids")})

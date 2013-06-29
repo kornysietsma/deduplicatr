@@ -34,7 +34,7 @@
         logger (plog/new-logger progress-agent)
         _ (throttler/run progress-agent #(info "(progress logged every 30 secs only)"))
         trees (treeify-named named-roots logger options)]
-    (duplicates trees)))
+    (duplicates trees options)))
 
 (defn show-duplicates
   "print names of duplicate file sets to standard output"
@@ -71,7 +71,8 @@
   (-> level name clojure.string/upper-case))
 
 (defn- process-options [raw-options]
-  {:ignore (set (:ignore raw-options))})
+  {:ignore (set (:ignore raw-options))
+   :sort-by (if (:by-files raw-options) :files :size)})
 
 (defn -main
   "The main entry point - collects command-line arguments and calls show-duplicates."
@@ -82,6 +83,7 @@
           (cli args
                ["-h" "--help" "Show help" :default false :flag true]
                ["-d" "--diff" "diff mode" :default false :flag true]
+               ["-f" "--by-files" "Sort by file count not size" :default false :flag true]
                ["-i" "--ignore" "(exact) file/dir names to ignore"
                 :parse-fn #(vec (.split % ","))
                 :default [".DS_Store"]])
