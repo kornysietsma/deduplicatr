@@ -4,6 +4,7 @@
    [deduplicatr.core :refer :all]
    [deduplicatr.duplicates :refer [duplicates]]
    [deduplicatr.fstree :refer [treeify]]
+   [deduplicatr.diffs :as diffs]
    [taoensso.timbre :as timbre]
    [fileutils.fu :as fu]))
 
@@ -24,7 +25,12 @@
   "just to keep functional testing simpler" 
   [roots]
   (with-out-ignored
-    (find-dups roots)))
+    (find-dups roots {:ignore #{}})))
+
+(defn find-diffs-quietly
+  [root1 root2]
+  (with-out-ignored
+    (diffs/find-pruned-diffs root1 root2 nil {:ignore #{}})))
 
 (defchecker with-path-ending [expected]
   (chatty-checker [actual]
@@ -86,3 +92,17 @@
       (just (dir-like {:group "a" :name "ab"})
             (dir-like {:group "b" :name "ab_split"}))))
 ; note other children of this test case pruned by prune-children
+
+(fact "diffs of a tree report differences with pruning to limit noise"
+      (find-diffs-quietly
+       (fu/rel-path fixtures "diff_a")
+       (fu/rel-path fixtures "diff_b"))
+      => (just
+          {:in-a (just (dir-like {:group :a :name "in_a"}))
+           :in-b (just (dir-like {:group :b :name "in_b"}))
+           :in-both (contains
+                     (dir-like {:group :a :name "in_both"})
+                     (dir-like {:group :b :name "in_both"})
+                     (dir-like {:group :a :name "in_a_empty"})
+                     (dir-like {:group :b :name "in_b_empty"})
+                     :in-any-order)}))

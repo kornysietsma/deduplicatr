@@ -45,3 +45,6 @@
 (fact "can list all children of a dir"
       (map fu/file-name  (fu/children (fu/path "test" "fixtures" "simple")))
       => (just "ab" "ab_split" "parent"))
+
+(fact "can get a path's parent"
+      (fu/parent (fu/path "foo" "bar")) => (fu/path "foo"))

@@ -81,6 +81,8 @@
       (doall (seq ds))))
   (doall (map #(.toPath %) (.listFiles (.toFile path)))))
 
+(defn parent ^Path [^Path path]
+  (.getParent path))
 
 (def no-links (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
 
